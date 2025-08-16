@@ -118,6 +118,47 @@ class InvoiceController {
     }
   }
 
+  static async updateInvoiceFbrStatus(req, res, next) {
+    try {
+      const { fbrStatus } = req.body;
+      
+      if (!fbrStatus) {
+        return res.status(400).json({
+          success: false,
+          message: 'FBR status is required'
+        });
+      }
+
+      const invoice = await InvoiceService.updateInvoiceFbrStatus(req.params.id, fbrStatus);
+
+      res.json({
+        success: true,
+        message: 'Invoice FBR status updated successfully',
+        data: invoice
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async postToFbr(req, res, next) {
+    try {
+      const result = await InvoiceService.postToFbr(req.params.id);
+
+      res.json({
+        success: true,
+        message: 'Invoice posted to FBR successfully',
+        data: result.invoice,
+        fbrResponse: result.postResponse
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to post invoice to FBR'
+      });
+    }
+  }
+
   static async downloadPDF(req, res, next) {
     try {
       const invoice = await InvoiceService.getInvoiceById(req.params.id);
@@ -125,8 +166,12 @@ class InvoiceController {
       
       const pdfBuffer = await PDFService.generateInvoicePDF(invoice);
       
+      const filename = invoice.invoiceNumber 
+        ? `invoice-${invoice.invoiceNumber}.pdf` 
+        : `invoice-${invoice.id}.pdf`;
+      
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.send(pdfBuffer);
     } catch (error) {
       next(error);

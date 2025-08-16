@@ -9,7 +9,7 @@ datasource db {
 
 model Invoice {
   id                    Int      @id @default(autoincrement())
-  invoiceNumber         String   @unique @map("invoice_number")
+  invoiceNumber         String?  @unique @map("invoice_number")
   invoiceType           String   @map("invoice_type")
   invoiceDate           DateTime @map("invoice_date") @db.Date
   sellerNTNCNIC         String   @map("seller_ntn_cnic")
@@ -24,6 +24,7 @@ model Invoice {
   invoiceRefNo          String?  @map("invoice_ref_no")
   scenarioId            String   @map("scenario_id")
   status                String   @default("pending")
+  fbrStatus             String   @default("not-posted") @map("fbr_status")
   totalAmount           Decimal  @map("total_amount") @db.Decimal(15, 2)
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")

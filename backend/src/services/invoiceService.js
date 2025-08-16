@@ -3,21 +3,49 @@ const { v4: uuidv4 } = require('uuid');
 
 class InvoiceService {
   static async createInvoice(invoiceData) {
-    const { items, ...invoiceDetails } = invoiceData;
+    const { items, ...allInvoiceDetails } = invoiceData;
     
-    // Generate unique invoice number
-    const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // Only pick fields that exist in the database schema for Invoice
+    const allowedInvoiceFields = [
+      'invoiceType', 'invoiceDate', 'sellerNTNCNIC', 'sellerBusinessName', 
+      'sellerProvince', 'sellerAddress', 'buyerNTNCNIC', 'buyerBusinessName',
+      'buyerProvince', 'buyerAddress', 'buyerRegistrationType', 'invoiceRefNo', 'scenarioId', 'status', 'fbrStatus'
+    ];
+    
+    const invoiceDetails = {};
+    allowedInvoiceFields.forEach(field => {
+      if (allInvoiceDetails[field] !== undefined) {
+        invoiceDetails[field] = allInvoiceDetails[field];
+      }
+    });
+    
+    // Only pick fields that exist in the database schema for InvoiceItem
+    const allowedItemFields = [
+      'hsCode', 'productDescription', 'rate', 'uoM', 'quantity', 'totalValues',
+      'valueSalesExcludingST', 'fixedNotifiedValueOrRetailPrice', 'salesTaxApplicable',
+      'salesTaxWithheldAtSource', 'extraTax', 'furtherTax', 'sroScheduleNo',
+      'fedPayable', 'discount', 'saleType', 'sroItemSerialNo'
+    ];
+    
+    const cleanedItems = items.map(item => {
+      const cleanedItem = {};
+      allowedItemFields.forEach(field => {
+        if (item[field] !== undefined) {
+          cleanedItem[field] = item[field];
+        }
+      });
+      return cleanedItem;
+    });
     
     // Calculate total amount
-    const totalAmount = items.reduce((sum, item) => sum + parseFloat(item.totalValues), 0);
+    const totalAmount = cleanedItems.reduce((sum, item) => sum + parseFloat(item.totalValues), 0);
 
     const invoice = await prisma.invoice.create({
       data: {
-        invoiceNumber,
         ...invoiceDetails,
         totalAmount,
         items: {
-          create: items
+          create: cleanedItems
         }
       },
       include: {
@@ -106,12 +134,44 @@ class InvoiceService {
   }
 
   static async updateInvoice(id, updateData) {
-    const { items, ...invoiceDetails } = updateData;
+    const { items, ...allInvoiceDetails } = updateData;
+    
+    // Only pick fields that exist in the database schema for Invoice
+    const allowedInvoiceFields = [
+      'invoiceType', 'invoiceDate', 'sellerNTNCNIC', 'sellerBusinessName', 
+      'sellerProvince', 'sellerAddress', 'buyerNTNCNIC', 'buyerBusinessName',
+      'buyerProvince', 'buyerAddress', 'buyerRegistrationType', 'invoiceRefNo', 'scenarioId', 'status', 'fbrStatus'
+    ];
+    
+    const invoiceDetails = {};
+    allowedInvoiceFields.forEach(field => {
+      if (allInvoiceDetails[field] !== undefined) {
+        invoiceDetails[field] = allInvoiceDetails[field];
+      }
+    });
     
     // Calculate new total if items are provided
     let totalAmount;
     if (items) {
-      totalAmount = items.reduce((sum, item) => sum + parseFloat(item.totalValues), 0);
+      // Only pick fields that exist in the database schema for InvoiceItem
+      const allowedItemFields = [
+        'hsCode', 'productDescription', 'rate', 'uoM', 'quantity', 'totalValues',
+        'valueSalesExcludingST', 'fixedNotifiedValueOrRetailPrice', 'salesTaxApplicable',
+        'salesTaxWithheldAtSource', 'extraTax', 'furtherTax', 'sroScheduleNo',
+        'fedPayable', 'discount', 'saleType', 'sroItemSerialNo'
+      ];
+      
+      const cleanedItems = items.map(item => {
+        const cleanedItem = {};
+        allowedItemFields.forEach(field => {
+          if (item[field] !== undefined) {
+            cleanedItem[field] = item[field];
+          }
+        });
+        return cleanedItem;
+      });
+      
+      totalAmount = cleanedItems.reduce((sum, item) => sum + parseFloat(item.totalValues), 0);
     }
 
     const updatePayload = {
@@ -129,13 +189,31 @@ class InvoiceService {
 
     // Update items if provided
     if (items) {
+      // Only pick fields that exist in the database schema for InvoiceItem
+      const allowedItemFields = [
+        'hsCode', 'productDescription', 'rate', 'uoM', 'quantity', 'totalValues',
+        'valueSalesExcludingST', 'fixedNotifiedValueOrRetailPrice', 'salesTaxApplicable',
+        'salesTaxWithheldAtSource', 'extraTax', 'furtherTax', 'sroScheduleNo',
+        'fedPayable', 'discount', 'saleType', 'sroItemSerialNo'
+      ];
+      
+      const cleanedItems = items.map(item => {
+        const cleanedItem = {};
+        allowedItemFields.forEach(field => {
+          if (item[field] !== undefined) {
+            cleanedItem[field] = item[field];
+          }
+        });
+        return cleanedItem;
+      });
+      
       // Delete existing items and create new ones
       await prisma.invoiceItem.deleteMany({
         where: { invoiceId: parseInt(id) }
       });
 
       await prisma.invoiceItem.createMany({
-        data: items.map(item => ({
+        data: cleanedItems.map(item => ({
           ...item,
           invoiceId: parseInt(id)
         }))
@@ -158,6 +236,18 @@ class InvoiceService {
     const invoice = await prisma.invoice.update({
       where: { id: parseInt(id) },
       data: { status },
+      include: {
+        items: true
+      }
+    });
+
+    return invoice;
+  }
+
+  static async updateInvoiceFbrStatus(id, fbrStatus) {
+    const invoice = await prisma.invoice.update({
+      where: { id: parseInt(id) },
+      data: { fbrStatus },
       include: {
         items: true
       }
@@ -189,6 +279,52 @@ class InvoiceService {
       completedInvoices,
       totalAmount: totalAmount._sum.totalAmount || 0
     };
+  }
+
+  static async postToFbr(id) {
+    const ThirdPartyService = require('./thirdPartyService');
+
+    // Get the invoice with items
+    const invoice = await this.getInvoiceById(id);
+
+    try {
+      // Step 1: Validate invoice
+      console.log('Validating invoice:', id);
+      await ThirdPartyService.validateInvoice(invoice);
+
+      // Step 2: Post invoice
+      console.log('Posting invoice to FBR:', id);
+      const postResponse = await ThirdPartyService.postInvoice(invoice);
+
+      // Step 3: Update invoice with results
+      const updateData = {
+        status: 'completed',
+        fbrStatus: 'posted'
+      };
+
+      // Update invoice number if it was not assigned and we got one from the response
+      if ((!invoice.invoiceNumber || invoice.invoiceNumber === 'Not Assigned') && postResponse.invoiceNumber) {
+        updateData.invoiceNumber = postResponse.invoiceNumber;
+      }
+
+      const updatedInvoice = await prisma.invoice.update({
+        where: { id: parseInt(id) },
+        data: updateData,
+        include: {
+          items: true
+        }
+      });
+
+      return {
+        success: true,
+        invoice: updatedInvoice,
+        postResponse
+      };
+
+    } catch (error) {
+      console.error('FBR posting failed:', error.message);
+      throw new Error(error.message);
+    }
   }
 }
 
