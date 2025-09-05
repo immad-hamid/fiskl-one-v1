@@ -194,6 +194,11 @@ export class SidebarComponent {
       ]
     },
     {
+      title: 'Profiles',
+      icon: 'user',
+      route: '/profiles'
+    },
+    {
       title: 'Reports',
       icon: 'bar-chart',
       route: '/reports'

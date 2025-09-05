@@ -24,6 +24,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'profiles',
+    loadChildren: () =>
+      import('./features/profiles/profiles.routes').then(
+        (m) => m.profileRoutes
+      ),
+  },
+  {
     path: 'settings',
     loadComponent: () =>
       import('./features/settings/settings.component').then(

@@ -9,6 +9,8 @@ const path = require('path');
 
 const { connectDatabase } = require('./config/database');
 const invoiceRoutes = require('./routes/invoices');
+const profileRoutes = require('./routes/profiles');
+const fbrRoutes = require('./routes/fbr');
 const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
@@ -62,7 +64,10 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
+// Routes
 app.use('/api/invoices', invoiceRoutes);
+app.use('/api/profiles', profileRoutes);
+app.use('/api/fbr', fbrRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

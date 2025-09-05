@@ -53,7 +53,8 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
           <span nz-icon nzType="reload"></span>
         </button>
 
-        <nz-badge [nzCount]="3" nzSize="small">
+        <!-- Notification icon hidden per user request -->
+        <!-- <nz-badge [nzCount]="3" nzSize="small">
           <button 
             nz-button 
             nzType="text" 
@@ -62,7 +63,7 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
             nzTooltipTitle="Notifications">
             <span nz-icon nzType="bell"></span>
           </button>
-        </nz-badge>
+        </nz-badge> -->
 
         <div class="user-menu" nz-dropdown [nzDropdownMenu]="menu" nzPlacement="bottomRight">
           <nz-avatar nzSize="small" nzIcon="user"></nz-avatar>
