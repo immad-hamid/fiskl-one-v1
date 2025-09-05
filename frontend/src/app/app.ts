@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { AuthService } from './core/services/auth.service';
 
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
@@ -37,8 +38,12 @@ export class App implements OnInit, OnDestroy {
   isCollapsed = false;
   currentRoute = '';
   isMobile = false;
+  showLayout = true;
 
-  constructor(private router: Router) {
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {
     this.checkIsMobile();
   }
 
@@ -52,7 +57,16 @@ export class App implements OnInit, OnDestroy {
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: NavigationEnd) => {
         this.currentRoute = event.urlAfterRedirects;
+        this.updateLayoutVisibility();
       });
+    
+    // Initial layout visibility check
+    this.updateLayoutVisibility();
+  }
+
+  private updateLayoutVisibility(): void {
+    // Hide layout for login page
+    this.showLayout = !this.currentRoute.includes('/login');
   }
 
   ngOnDestroy() {

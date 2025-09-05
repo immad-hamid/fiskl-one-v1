@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
@@ -143,7 +144,10 @@ export class HeaderComponent {
   @Input() isCollapsed = false;
   @Output() toggleCollapsed = new EventEmitter<void>();
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {}
 
   getRouteTitle(): string {
     const route = this.router.url.split('/')[1] || 'dashboard';
@@ -159,7 +163,15 @@ export class HeaderComponent {
   }
 
   logout(): void {
-    // Implement logout logic
-    console.log('Logout clicked');
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+      },
+      error: (error) => {
+        console.error('Logout error:', error);
+        // Even if logout fails, clear local session and redirect
+        this.router.navigate(['/login']);
+      }
+    });
   }
 }

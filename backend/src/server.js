@@ -11,6 +11,7 @@ const { connectDatabase } = require('./config/database');
 const invoiceRoutes = require('./routes/invoices');
 const profileRoutes = require('./routes/profiles');
 const fbrRoutes = require('./routes/fbr');
+const { router: authRoutes } = require('./routes/auth');
 const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
@@ -65,6 +66,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 // Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/fbr', fbrRoutes);

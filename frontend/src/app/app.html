@@ -1,4 +1,10 @@
-<nz-layout class="app-layout">
+<!-- Auth pages (login) without layout -->
+<div *ngIf="!showLayout" class="auth-container">
+  <router-outlet></router-outlet>
+</div>
+
+<!-- Main application layout for authenticated pages -->
+<nz-layout *ngIf="showLayout" class="app-layout">
   <!-- Mobile overlay -->
   <div class="mobile-overlay" 
        [class.active]="!isCollapsed && isMobile" 
