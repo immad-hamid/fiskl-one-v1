@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthService } from './core/services/auth.service';
+import { ThemeService } from './core/services/theme.service';
 
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
@@ -42,7 +43,8 @@ export class App implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private themeService: ThemeService
   ) {
     this.checkIsMobile();
   }

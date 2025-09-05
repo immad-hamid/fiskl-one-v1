@@ -1,0 +1,334 @@
+// =============================================================================
+// FISKL DARK THEME - CSS-ONLY OVERRIDES
+// =============================================================================
+// Dark theme variations that work with CSS variables
+// Applied when [data-theme="dark"] is set on the html element
+// This file only contains CSS, no Less variables to avoid compilation errors
+// =============================================================================
+
+// =============================================================================
+// DARK THEME APPLICATION
+// =============================================================================
+
+[data-theme="dark"] {
+  // Override NG-ZORRO variables for dark theme
+  
+  // Text Colors
+  .ant-typography,
+  .ant-typography h1,
+  .ant-typography h2,
+  .ant-typography h3,
+  .ant-typography h4,
+  .ant-typography h5,
+  .ant-typography h6 {
+    color: @fiskl-dark-text-primary !important;
+  }
+
+  .ant-typography .ant-typography-caption {
+    color: @fiskl-dark-text-secondary !important;
+  }
+
+  // Backgrounds
+  body,
+  .ant-layout,
+  .ant-layout-content {
+    background-color: @fiskl-dark-bg-layout !important;
+    color: @fiskl-dark-text-primary !important;
+  }
+
+  .ant-layout-header {
+    background-color: @fiskl-dark-bg-primary !important;
+    border-bottom: 1px solid @fiskl-dark-border-base !important;
+  }
+
+  .ant-layout-sider {
+    background-color: @fiskl-dark-bg-primary !important;
+  }
+
+  // Cards
+  .ant-card {
+    background-color: @fiskl-dark-bg-primary !important;
+    border-color: @fiskl-dark-border-base !important;
+    color: @fiskl-dark-text-primary !important;
+
+    .ant-card-head {
+      background-color: @fiskl-dark-bg-secondary !important;
+      border-bottom-color: @fiskl-dark-border-base !important;
+      color: @fiskl-dark-text-primary !important;
+    }
+
+    .ant-card-head-title {
+      color: @fiskl-dark-text-primary !important;
+    }
+  }
+
+  // Tables
+  .ant-table {
+    background-color: @fiskl-dark-bg-primary !important;
+    color: @fiskl-dark-text-primary !important;
+
+    .ant-table-thead > tr > th {
+      background-color: @fiskl-dark-bg-secondary !important;
+      color: @fiskl-dark-text-primary !important;
+      border-bottom-color: @fiskl-dark-border-base !important;
+    }
+
+    .ant-table-tbody > tr > td {
+      border-bottom-color: @fiskl-dark-border-light !important;
+      color: @fiskl-dark-text-primary !important;
+    }
+
+    .ant-table-tbody > tr:hover > td {
+      background-color: rgba(102, 126, 234, 0.1) !important;
+    }
+  }
+
+  // Forms
+  .ant-input,
+  .ant-select-selector,
+  .ant-picker {
+    background-color: @fiskl-dark-bg-secondary !important;
+    border-color: @fiskl-dark-border-base !important;
+    color: @fiskl-dark-text-primary !important;
+
+    &:hover {
+      border-color: @fiskl-primary-light !important;
+    }
+
+    &:focus,
+    &.ant-input-focused,
+    &.ant-select-focused .ant-select-selector,
+    &.ant-picker-focused {
+      border-color: @fiskl-primary-main !important;
+      box-shadow: 0 0 0 2px fade(@fiskl-primary-main, 20%) !important;
+    }
+  }
+
+  .ant-input-placeholder,
+  .ant-select-selection-placeholder {
+    color: @fiskl-dark-text-tertiary !important;
+  }
+
+  // Labels
+  .ant-form-item-label > label {
+    color: @fiskl-dark-text-primary !important;
+  }
+
+  // Buttons (keep primary gradient, adjust others)
+  .ant-btn-default {
+    background-color: @fiskl-dark-bg-secondary !important;
+    border-color: @fiskl-dark-border-base !important;
+    color: @fiskl-dark-text-primary !important;
+
+    &:hover {
+      background-color: @fiskl-dark-bg-tertiary !important;
+      border-color: @fiskl-primary-main !important;
+      color: @fiskl-primary-main !important;
+    }
+  }
+
+  // Menu
+  .ant-menu {
+    background-color: @fiskl-dark-bg-primary !important;
+    color: @fiskl-dark-text-primary !important;
+
+    .ant-menu-item,
+    .ant-menu-submenu-title {
+      color: @fiskl-dark-text-primary !important;
+
+      &:hover {
+        background-color: fade(@fiskl-primary-main, 10%) !important;
+        color: @fiskl-primary-main !important;
+      }
+    }
+
+    .ant-menu-item-selected {
+      background-color: fade(@fiskl-primary-main, 15%) !important;
+      color: @fiskl-primary-main !important;
+    }
+  }
+
+  // Modals
+  .ant-modal-content {
+    background-color: @fiskl-dark-bg-primary !important;
+    color: @fiskl-dark-text-primary !important;
+  }
+
+  .ant-modal-header {
+    background-color: @fiskl-dark-bg-primary !important;
+    border-bottom-color: @fiskl-dark-border-base !important;
+  }
+
+  .ant-modal-title {
+    color: @fiskl-dark-text-primary !important;
+  }
+
+  // Drawer
+  .ant-drawer-content {
+    background-color: @fiskl-dark-bg-primary !important;
+    color: @fiskl-dark-text-primary !important;
+  }
+
+  .ant-drawer-header {
+    background-color: @fiskl-dark-bg-primary !important;
+    border-bottom-color: @fiskl-dark-border-base !important;
+  }
+
+  .ant-drawer-title {
+    color: @fiskl-dark-text-primary !important;
+  }
+
+  // Tags
+  .ant-tag {
+    background-color: @fiskl-dark-bg-secondary !important;
+    border-color: @fiskl-dark-border-base !important;
+    color: @fiskl-dark-text-secondary !important;
+  }
+
+  // Alerts
+  .ant-alert {
+    border-color: @fiskl-dark-border-base !important;
+
+    &.ant-alert-success {
+      background-color: fade(@fiskl-dark-success, 15%) !important;
+      border-color: fade(@fiskl-dark-success, 25%) !important;
+    }
+
+    &.ant-alert-info {
+      background-color: fade(@fiskl-primary-main, 15%) !important;
+      border-color: fade(@fiskl-primary-main, 25%) !important;
+    }
+
+    &.ant-alert-warning {
+      background-color: fade(@fiskl-dark-warning, 15%) !important;
+      border-color: fade(@fiskl-dark-warning, 25%) !important;
+    }
+
+    &.ant-alert-error {
+      background-color: fade(@fiskl-dark-error, 15%) !important;
+      border-color: fade(@fiskl-dark-error, 25%) !important;
+    }
+  }
+
+  // Tooltips
+  .ant-tooltip-inner {
+    background-color: rgba(0, 0, 0, 0.85) !important;
+    color: @fiskl-text-inverse !important;
+  }
+
+  // Select dropdown
+  .ant-select-dropdown {
+    background-color: @fiskl-dark-bg-primary !important;
+    border-color: @fiskl-dark-border-base !important;
+
+    .ant-select-item {
+      color: @fiskl-dark-text-primary !important;
+
+      &:hover {
+        background-color: fade(@fiskl-primary-main, 10%) !important;
+      }
+
+      &.ant-select-item-option-selected {
+        background-color: fade(@fiskl-primary-main, 15%) !important;
+        color: @fiskl-primary-main !important;
+      }
+    }
+  }
+
+  // DatePicker dropdown
+  .ant-picker-dropdown {
+    .ant-picker-panel-container {
+      background-color: @fiskl-dark-bg-primary !important;
+      border-color: @fiskl-dark-border-base !important;
+    }
+
+    .ant-picker-header,
+    .ant-picker-body {
+      background-color: @fiskl-dark-bg-primary !important;
+    }
+
+    .ant-picker-cell {
+      color: @fiskl-dark-text-primary !important;
+
+      &:hover .ant-picker-cell-inner {
+        background-color: fade(@fiskl-primary-main, 10%) !important;
+      }
+    }
+
+    .ant-picker-cell-selected .ant-picker-cell-inner {
+      background-color: @fiskl-primary-main !important;
+    }
+  }
+
+  // Pagination
+  .ant-pagination {
+    .ant-pagination-item {
+      background-color: @fiskl-dark-bg-secondary !important;
+      border-color: @fiskl-dark-border-base !important;
+
+      a {
+        color: @fiskl-dark-text-primary !important;
+      }
+
+      &:hover a {
+        color: @fiskl-primary-main !important;
+      }
+
+      &.ant-pagination-item-active {
+        background-color: @fiskl-primary-main !important;
+        border-color: @fiskl-primary-main !important;
+
+        a {
+          color: @fiskl-text-inverse !important;
+        }
+      }
+    }
+
+    .ant-pagination-prev,
+    .ant-pagination-next {
+      .ant-pagination-item-link {
+        background-color: @fiskl-dark-bg-secondary !important;
+        border-color: @fiskl-dark-border-base !important;
+        color: @fiskl-dark-text-primary !important;
+
+        &:hover {
+          color: @fiskl-primary-main !important;
+          border-color: @fiskl-primary-main !important;
+        }
+      }
+    }
+  }
+
+  // Dividers
+  .ant-divider {
+    border-color: @fiskl-dark-border-base !important;
+  }
+
+  // Steps
+  .ant-steps-item-title {
+    color: @fiskl-dark-text-primary !important;
+  }
+
+  .ant-steps-item-description {
+    color: @fiskl-dark-text-secondary !important;
+  }
+
+  // Collapse
+  .ant-collapse {
+    background-color: @fiskl-dark-bg-primary !important;
+    border-color: @fiskl-dark-border-base !important;
+
+    .ant-collapse-item {
+      border-bottom-color: @fiskl-dark-border-base !important;
+    }
+
+    .ant-collapse-header {
+      color: @fiskl-dark-text-primary !important;
+    }
+
+    .ant-collapse-content {
+      background-color: @fiskl-dark-bg-primary !important;
+      border-top-color: @fiskl-dark-border-base !important;
+    }
+  }
+}

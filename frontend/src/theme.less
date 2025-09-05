@@ -1,9 +1,288 @@
+// =============================================================================
+// FISKL THEME - NG-ZORRO CUSTOMIZATION
+// =============================================================================
+// Based on the login page gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%)
+// This file contains all design tokens and NG-ZORRO variable overrides
+// =============================================================================
 
-// Custom Theming for NG-ZORRO
-// For more information: https://ng.ant.design/docs/customize-theme/en
+// Import NG-ZORRO base styles
 @import "../node_modules/ng-zorro-antd/ng-zorro-antd.less";
 
-// Override less variables to here
-// View all variables: https://github.com/NG-ZORRO/ng-zorro-antd/blob/master/components/style/themes/default.less
+// =============================================================================
+// DESIGN TOKENS - Color Palette
+// =============================================================================
 
-// @primary-color: #1890ff;
+// Primary Colors (from login gradient)
+@fiskl-primary-start: #667eea;       // Login gradient start - light purple/blue
+@fiskl-primary-end: #764ba2;         // Login gradient end - darker purple
+@fiskl-primary-main: #667eea;        // Main brand color
+@fiskl-primary-dark: #5a67d8;        // Darker variant
+@fiskl-primary-light: #7c8aed;       // Lighter variant
+
+// Semantic Colors
+@fiskl-success: #52c41a;             // Green for success states
+@fiskl-warning: #faad14;             // Orange for warnings
+@fiskl-error: #ff4d4f;               // Red for errors  
+@fiskl-info: @fiskl-primary-main;    // Use primary for info
+
+// Neutral/Gray Scale (from login page)
+@fiskl-text-primary: #333333;        // Main text color (login h1)
+@fiskl-text-secondary: #666666;      // Secondary text (login p)
+@fiskl-text-tertiary: #999999;       // Tertiary text (login footer)
+@fiskl-text-disabled: #cccccc;       // Disabled text
+@fiskl-text-inverse: #ffffff;        // White text on dark backgrounds
+
+// Background Colors
+@fiskl-bg-primary: #ffffff;          // Main background
+@fiskl-bg-secondary: #f5f5f5;        // Secondary background (disabled inputs)
+@fiskl-bg-tertiary: #fafafa;         // Tertiary background
+@fiskl-bg-layout: #f0f2f5;           // App layout background
+
+// Border Colors
+@fiskl-border-light: #eeeeee;        // Light borders (login footer)
+@fiskl-border-base: #dddddd;         // Base borders (form inputs)
+@fiskl-border-dark: #cccccc;         // Darker borders
+@fiskl-border-focus: @fiskl-primary-main; // Focus state borders
+
+// =============================================================================
+// DESIGN TOKENS - Spacing & Sizing
+// =============================================================================
+
+@fiskl-spacing-xs: 4px;              // Extra small spacing
+@fiskl-spacing-sm: 8px;              // Small spacing
+@fiskl-spacing-md: 16px;             // Medium spacing
+@fiskl-spacing-lg: 24px;             // Large spacing  
+@fiskl-spacing-xl: 32px;             // Extra large spacing
+@fiskl-spacing-xxl: 40px;            // Login card padding
+
+// Border Radius
+@fiskl-radius-sm: 4px;               // Small radius (buttons, inputs)
+@fiskl-radius-md: 6px;               // Medium radius
+@fiskl-radius-lg: 8px;               // Large radius (login card)
+@fiskl-radius-xl: 12px;              // Extra large radius
+
+// Shadows
+@fiskl-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+@fiskl-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+@fiskl-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.1); // Login card shadow
+@fiskl-shadow-focus: 0 0 0 2px rgba(102, 126, 234, 0.1); // Focus shadow
+
+// =============================================================================
+// DESIGN TOKENS - Typography
+// =============================================================================
+
+@fiskl-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+@fiskl-font-family-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+
+// Font Sizes
+@fiskl-font-size-xs: 12px;           // Login footer
+@fiskl-font-size-sm: 14px;           // Labels, small text
+@fiskl-font-size-base: 16px;         // Base font size (inputs, buttons)
+@fiskl-font-size-lg: 18px;           // Large text
+@fiskl-font-size-xl: 24px;           // Extra large
+@fiskl-font-size-xxl: 28px;          // Login page h1
+
+// Font Weights
+@fiskl-font-weight-normal: 400;
+@fiskl-font-weight-medium: 500;      // Labels
+@fiskl-font-weight-semibold: 600;    // Buttons
+@fiskl-font-weight-bold: 700;        // Login h1
+
+// Line Heights
+@fiskl-line-height-tight: 1.2;
+@fiskl-line-height-base: 1.5;
+@fiskl-line-height-relaxed: 1.75;
+
+// =============================================================================
+// GRADIENTS
+// =============================================================================
+
+@fiskl-gradient-primary: linear-gradient(135deg, @fiskl-primary-start 0%, @fiskl-primary-end 100%);
+@fiskl-gradient-subtle: linear-gradient(135deg, fade(@fiskl-primary-start, 10%) 0%, fade(@fiskl-primary-end, 5%) 100%);
+
+// =============================================================================
+// NG-ZORRO VARIABLE OVERRIDES
+// =============================================================================
+
+// Primary Theme Colors
+@primary-color: @fiskl-primary-main;
+@info-color: @fiskl-info;
+@success-color: @fiskl-success;
+@processing-color: @fiskl-primary-main;
+@error-color: @fiskl-error;
+@warning-color: @fiskl-warning;
+
+// Text Colors
+@text-color: @fiskl-text-primary;
+@text-color-secondary: @fiskl-text-secondary;
+@text-color-inverse: @fiskl-text-inverse;
+@heading-color: @fiskl-text-primary;
+@heading-color-dark: @fiskl-text-inverse;
+
+// Background Colors
+@body-background: @fiskl-bg-primary;
+@component-background: @fiskl-bg-primary;
+@background-color-light: @fiskl-bg-secondary;
+@background-color-base: @fiskl-bg-tertiary;
+@layout-body-background: @fiskl-bg-layout;
+
+// Border & Divider
+@border-color-base: @fiskl-border-base;
+@border-color-split: @fiskl-border-light;
+@border-radius-base: @fiskl-radius-sm;
+@border-width-base: 1px;
+
+// Typography
+@font-family: @fiskl-font-family;
+@code-family: @fiskl-font-family-mono;
+@font-size-base: @fiskl-font-size-base;
+@font-size-lg: @fiskl-font-size-lg;
+@font-size-sm: @fiskl-font-size-sm;
+@line-height-base: @fiskl-line-height-base;
+
+// Shadows
+@shadow-1-up: @fiskl-shadow-sm;
+@shadow-1-down: @fiskl-shadow-sm;
+@shadow-1-left: @fiskl-shadow-sm;
+@shadow-1-right: @fiskl-shadow-sm;
+@shadow-2: @fiskl-shadow-md;
+@box-shadow-base: @fiskl-shadow-md;
+
+// =============================================================================
+// COMPONENT-SPECIFIC OVERRIDES
+// =============================================================================
+
+// Buttons
+@btn-primary-bg: @fiskl-primary-main;
+@btn-primary-border: @fiskl-primary-main;
+@btn-default-bg: @fiskl-bg-primary;
+@btn-default-border: @fiskl-border-base;
+@btn-border-radius-base: @fiskl-radius-sm;
+@btn-border-radius-sm: @fiskl-radius-sm;
+@btn-padding-horizontal-base: @fiskl-spacing-md;
+@btn-padding-vertical-base: @fiskl-spacing-sm;
+@btn-font-weight: @fiskl-font-weight-semibold;
+
+// Inputs
+@input-bg: @fiskl-bg-primary;
+@input-border-color: @fiskl-border-base;
+@input-hover-border-color: @fiskl-primary-light;
+@input-focus-border-color: @fiskl-border-focus;
+@input-placeholder-color: @fiskl-text-tertiary;
+@input-padding-horizontal: 12px;
+@input-padding-vertical: 8px;
+@input-border-radius: @fiskl-radius-sm;
+
+// Links
+@link-color: @fiskl-primary-main;
+@link-hover-color: @fiskl-primary-dark;
+@link-decoration: none;
+@link-hover-decoration: none;
+
+// Layout
+@layout-header-background: @fiskl-bg-primary;
+@layout-header-height: 64px;
+@layout-header-padding: 0 @fiskl-spacing-lg;
+@layout-sider-background: @fiskl-bg-primary;
+
+// Menu
+@menu-bg: @fiskl-bg-primary;
+@menu-item-active-bg: fade(@fiskl-primary-main, 10%);
+@menu-item-selected-bg: fade(@fiskl-primary-main, 15%);
+@menu-highlight-color: @fiskl-primary-main;
+
+// Cards
+@card-radius: @fiskl-radius-lg;
+@card-padding-base: @fiskl-spacing-lg;
+@card-background: @fiskl-bg-primary;
+@card-shadow: @fiskl-shadow-md;
+
+// Tables
+@table-bg: @fiskl-bg-primary;
+@table-header-bg: @fiskl-bg-tertiary;
+@table-row-hover-bg: fade(@fiskl-primary-main, 5%);
+@table-selected-row-bg: fade(@fiskl-primary-main, 10%);
+
+// Modals & Drawers
+@modal-content-bg: @fiskl-bg-primary;
+@modal-heading-color: @fiskl-text-primary;
+@modal-mask-bg: rgba(0, 0, 0, 0.45);
+@drawer-bg: @fiskl-bg-primary;
+
+// Tags
+@tag-default-bg: @fiskl-bg-secondary;
+@tag-default-color: @fiskl-text-secondary;
+@tag-border-radius: @fiskl-radius-sm;
+
+// Alerts
+@alert-success-bg-color: fade(@fiskl-success, 10%);
+@alert-success-border-color: fade(@fiskl-success, 20%);
+@alert-info-bg-color: fade(@fiskl-info, 10%);
+@alert-info-border-color: fade(@fiskl-info, 20%);
+@alert-warning-bg-color: fade(@fiskl-warning, 10%);
+@alert-warning-border-color: fade(@fiskl-warning, 20%);
+@alert-error-bg-color: fade(@fiskl-error, 10%);
+@alert-error-border-color: fade(@fiskl-error, 20%);
+
+// Form validation colors
+@success-color: @fiskl-success;
+@warning-color: @fiskl-warning;
+@error-color: @fiskl-error;
+
+// Pagination
+@pagination-item-bg-active: @fiskl-primary-main;
+@pagination-item-link-bg: @fiskl-bg-primary;
+@pagination-item-size: 32px;
+
+// DatePicker
+@picker-bg: @fiskl-bg-primary;
+@picker-basic-cell-hover-color: fade(@fiskl-primary-main, 10%);
+@picker-item-active-bg: @fiskl-primary-main;
+@picker-date-hover-range-border-color: @fiskl-primary-light;
+
+// Tooltip
+@tooltip-bg: rgba(0, 0, 0, 0.75);
+@tooltip-color: @fiskl-text-inverse;
+@tooltip-border-radius: @fiskl-radius-sm;
+
+// Loading & Progress
+@progress-default-color: @fiskl-primary-main;
+@spin-dot-default: @fiskl-primary-main;
+
+// =============================================================================
+// ACCESSIBILITY & RTL SUPPORT
+// =============================================================================
+
+// Ensure sufficient contrast ratios (WCAG AA compliant)
+@disabled-color: #bfbfbf;           // Meets 3:1 contrast on white
+@disabled-bg: #f5f5f5;              // Light gray for disabled states
+
+// RTL Support - NG-ZORRO handles most RTL automatically
+// Custom RTL adjustments can be added here if needed
+
+// =============================================================================
+// CUSTOM UTILITY CLASSES
+// =============================================================================
+
+// Gradient backgrounds for headers, hero sections, etc.
+.fiskl-gradient-bg {
+  background: @fiskl-gradient-primary;
+  color: @fiskl-text-inverse;
+}
+
+.fiskl-gradient-subtle {
+  background: @fiskl-gradient-subtle;
+}
+
+// High contrast text combinations
+.fiskl-high-contrast {
+  background: @fiskl-text-primary;
+  color: @fiskl-text-inverse;
+}
+
+// Focus states for better accessibility
+.fiskl-focus-ring:focus {
+  outline: none;
+  box-shadow: @fiskl-shadow-focus;
+  border-color: @fiskl-border-focus;
+}

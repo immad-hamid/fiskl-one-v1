@@ -43,6 +43,7 @@ class ThirdPartyService {
     const endpoint = process.env.MOCK_THIRD_PARTY_API === 'true' 
       ? '/fbr/validate-invoice-sb' 
       : '/fbr/validate-invoice';
+    console.log('Using endpoint:', endpoint);
 
     try {
       const payload = this.formatInvoicePayload(invoiceData);console.log(payload);

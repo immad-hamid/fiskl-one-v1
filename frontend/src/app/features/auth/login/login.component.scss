@@ -1,98 +1,72 @@
+// Login styles now use theme tokens from global styles.scss
+// This ensures consistency and supports theme switching
+
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  padding: var(--fiskl-spacing-lg);
+  // Background applied via global styles using theme tokens
 }
 
 .login-card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  padding: 40px;
   width: 100%;
   max-width: 400px;
+  // Background, border-radius, shadow, padding applied via global styles
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: var(--fiskl-spacing-xl);
 
   h1 {
-    color: #333;
-    margin: 0 0 10px 0;
-    font-size: 28px;
-    font-weight: 700;
+    color: var(--fiskl-text-primary);
+    margin: 0 0 var(--fiskl-spacing-sm) 0;
+    font-size: var(--fiskl-font-size-xxl);
+    font-weight: var(--fiskl-font-weight-bold);
   }
 
   p {
-    color: #666;
+    color: var(--fiskl-text-secondary);
     margin: 0;
-    font-size: 16px;
+    font-size: var(--fiskl-font-size-base);
   }
 }
 
 .login-form {
   .form-group {
-    margin-bottom: 20px;
+    margin-bottom: var(--fiskl-spacing-lg);
 
     label {
       display: block;
-      margin-bottom: 5px;
-      color: #333;
-      font-weight: 500;
-      font-size: 14px;
+      margin-bottom: var(--fiskl-spacing-xs);
+      color: var(--fiskl-text-primary);
+      font-weight: var(--fiskl-font-weight-medium);
+      font-size: var(--fiskl-font-size-sm);
     }
 
-    .form-control {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 16px;
-      transition: border-color 0.3s ease;
-      box-sizing: border-box;
-
-      &:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
-      }
-
-      &:disabled {
-        background-color: #f5f5f5;
-        cursor: not-allowed;
-      }
-    }
+    // Form control styles now handled by global theme styles
   }
 
   .error-message {
-    background-color: #fee;
-    color: #c33;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    border: 1px solid #fcc;
-    font-size: 14px;
+    background-color: color-mix(in srgb, var(--fiskl-error) 10%, var(--fiskl-bg-primary));
+    color: var(--fiskl-error);
+    padding: var(--fiskl-spacing-sm);
+    border-radius: var(--fiskl-radius-sm);
+    margin-bottom: var(--fiskl-spacing-lg);
+    border: 1px solid color-mix(in srgb, var(--fiskl-error) 20%, transparent);
+    font-size: var(--fiskl-font-size-sm);
   }
 
+  // Button styles now handled by global theme styles
   .login-btn {
     width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--fiskl-spacing-sm);
+    transition: transform 0.2s ease, opacity 0.2s ease;
 
     &:hover:not(:disabled) {
       transform: translateY(-1px);
@@ -107,7 +81,7 @@
     .spinner {
       width: 16px;
       height: 16px;
-      border: 2px solid #ffffff;
+      border: 2px solid var(--fiskl-text-inverse);
       border-top: 2px solid transparent;
       border-radius: 50%;
       animation: spin 1s linear infinite;
@@ -117,13 +91,13 @@
 
 .login-footer {
   text-align: center;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
+  margin-top: var(--fiskl-spacing-lg);
+  padding-top: var(--fiskl-spacing-lg);
+  border-top: 1px solid var(--fiskl-border-light);
 
   p {
-    color: #999;
-    font-size: 12px;
+    color: var(--fiskl-text-tertiary);
+    font-size: var(--fiskl-font-size-xs);
     margin: 0;
   }
 }
