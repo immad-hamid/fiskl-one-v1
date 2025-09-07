@@ -33,43 +33,21 @@ class ThirdPartyService {
   static async validateInvoice(invoiceData) {
     const apiUrl = process.env.THIRD_PARTY_API_URL;
     const apiKey = process.env.THIRD_PARTY_API_KEY;
-    console.log(apiUrl);
-    console.log(apiKey);
     const isDevelopment = process.env.NODE_ENV === 'development';
 
     if (!apiUrl || !apiKey) {
       throw new Error('Third-party API configuration missing');
     }
 
-    // Mock mode for development when external API is not available
-    if (isDevelopment && process.env.MOCK_THIRD_PARTY_API === 'true') {
-      console.log('🔧 Development mode: Mocking invoice validation...');
-      
-      // Simulate validation logic
-      const payload = this.formatInvoicePayload(invoiceData);
-      
-      // Simulate some basic validation checks
-      if (!payload.invoiceType || !payload.sellerBusinessName || !payload.buyerBusinessName) {
-        throw new Error('Validation failed: Missing required fields');
-      }
-      
-      if (!payload.items || payload.items.length === 0) {
-        throw new Error('Validation failed: No items found in invoice');
-      }
-      
-      // Simulate successful validation
-      return {
-        success: true,
-        message: 'Invoice validation successful (mocked)',
-        validationId: `mock_validation_${Date.now()}`
-      };
-    }
+    // Determine endpoint based on MOCK_THIRD_PARTY_API setting
+    const endpoint = process.env.MOCK_THIRD_PARTY_API === 'true' 
+      ? '/fbr/validate-invoice-sb' 
+      : '/fbr/validate-invoice';
+    console.log('Using endpoint:', endpoint);
 
     try {
-      const payload = this.formatInvoicePayload(invoiceData);
-      console.log(payload);
-      console.log(`${apiUrl}/fbr/validate-invoice`)
-      const response = await axios.post(`${apiUrl}/fbr/validate-invoice`, payload, {
+      const payload = this.formatInvoicePayload(invoiceData);console.log(payload);
+      const response = await axios.post(`${apiUrl}${endpoint}`, payload, {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
@@ -77,11 +55,19 @@ class ThirdPartyService {
         timeout: 30000
       });
 
-      console.log(response);
+      console.log('<--------------------------- RESPONSE ------------------------->>' + response);
 
       return this.validateResponse(response.data);
     } catch (error) {
-      console.error('Invoice validation error:', error.message);
+      // Handle FBR API validation errors (when API returns 401 but with validation details)
+      if (error.response?.status === 401 && error.response?.data?.validationResponse) {
+        const validationError = error.response.data.validationResponse;
+        const fbrError = new Error(validationError.error || 'FBR validation failed');
+        fbrError.statusCode = 400; // Convert 401 to 400 for validation errors
+        fbrError.fbrErrorCode = validationError.errorCode;
+        fbrError.fbrStatus = validationError.status;
+        throw fbrError;
+      }
       
       // If we get a 404 in development, suggest using mock mode
       if (isDevelopment && error.response?.status === 404) {
@@ -101,30 +87,15 @@ class ThirdPartyService {
       throw new Error('Third-party API configuration missing');
     }
 
-    // Mock mode for development when external API is not available
-    if (isDevelopment && process.env.MOCK_THIRD_PARTY_API === 'true') {
-      console.log('🔧 Development mode: Mocking invoice posting...');
-      
-      const payload = this.formatInvoicePayload(invoiceData);
-      
-      // Simulate posting logic
-      if (!payload.invoiceType || !payload.sellerBusinessName || !payload.buyerBusinessName) {
-        throw new Error('Posting failed: Missing required fields');
-      }
-      
-      // Simulate successful posting
-      return {
-        success: true,
-        message: 'Invoice posted successfully (mocked)',
-        invoiceNumber: `FBR-${Date.now()}`,
-        fbrReference: `mock_ref_${Date.now()}`
-      };
-    }
+    // Determine endpoint based on MOCK_THIRD_PARTY_API setting
+    const endpoint = process.env.MOCK_THIRD_PARTY_API === 'true' 
+      ? '/fbr/post-invoice-sb' 
+      : '/fbr/post-invoice';
 
     try {
       const payload = this.formatInvoicePayload(invoiceData);
       
-      const response = await axios.post(`${apiUrl}/fbr/post-invoice`, payload, {
+      const response = await axios.post(`${apiUrl}${endpoint}`, payload, {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
@@ -135,6 +106,16 @@ class ThirdPartyService {
       return this.validateResponse(response.data);
     } catch (error) {
       console.error('Invoice posting error:', error.message);
+      
+      // Handle FBR API validation errors (when API returns 401 but with validation details)
+      if (error.response?.status === 401 && error.response?.data?.validationResponse) {
+        const validationError = error.response.data.validationResponse;
+        const fbrError = new Error(validationError.error || 'FBR posting failed');
+        fbrError.statusCode = 400; // Convert 401 to 400 for validation errors
+        fbrError.fbrErrorCode = validationError.errorCode;
+        fbrError.fbrStatus = validationError.status;
+        throw fbrError;
+      }
       
       // If we get a 404 in development, suggest using mock mode
       if (isDevelopment && error.response?.status === 404) {

@@ -1,5 +1,58 @@
-const { prisma } = require('../config/database');
+const prisma = require('../utils/prisma');
 const { v4: uuidv4 } = require('uuid');
+
+// Helper function to convert Prisma Decimal fields to JavaScript numbers with 4 decimal precision
+const convertDecimalFields = (obj) => {
+  if (!obj) return obj;
+  
+  if (Array.isArray(obj)) {
+    return obj.map(convertDecimalFields);
+  }
+  
+  if (typeof obj === 'object') {
+    // Handle Date objects
+    if (obj instanceof Date) {
+      return obj.toISOString();
+    }
+    
+    // Handle Prisma Decimal objects (they have s, e, d properties)
+    if (obj.s !== undefined && obj.e !== undefined && obj.d !== undefined) {
+      // This is a Prisma Decimal object, convert to number
+      try {
+        const decimalValue = parseFloat(obj.toString());
+        return Math.round(decimalValue * 10000) / 10000; // 4 decimal places
+      } catch (error) {
+        console.warn('Failed to convert decimal:', obj);
+        return 0;
+      }
+    }
+    
+    const converted = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value && typeof value === 'object') {
+        if (value instanceof Date) {
+          converted[key] = value.toISOString();
+        } else if (value.s !== undefined && value.e !== undefined && value.d !== undefined) {
+          // Prisma Decimal object
+          try {
+            const decimalValue = parseFloat(value.toString());
+            converted[key] = Math.round(decimalValue * 10000) / 10000; // 4 decimal places
+          } catch (error) {
+            console.warn('Failed to convert decimal:', value);
+            converted[key] = 0;
+          }
+        } else {
+          converted[key] = convertDecimalFields(value);
+        }
+      } else {
+        converted[key] = value;
+      }
+    }
+    return converted;
+  }
+  
+  return obj;
+};
 
 class InvoiceService {
   static async createInvoice(invoiceData) {
@@ -53,7 +106,7 @@ class InvoiceService {
       }
     });
 
-    return invoice;
+    return convertDecimalFields(invoice);
   }
 
   static async getInvoices(page = 1, limit = 10, filters = {}) {
@@ -106,7 +159,7 @@ class InvoiceService {
     ]);
 
     return {
-      invoices,
+      invoices: invoices.map(invoice => convertDecimalFields(invoice)),
       pagination: {
         page,
         limit,
@@ -130,7 +183,7 @@ class InvoiceService {
       throw new Error('Invoice not found');
     }
 
-    return invoice;
+    return convertDecimalFields(invoice);
   }
 
   static async updateInvoice(id, updateData) {
@@ -277,7 +330,7 @@ class InvoiceService {
       totalInvoices,
       pendingInvoices,
       completedInvoices,
-      totalAmount: totalAmount._sum.totalAmount || 0
+      totalAmount: totalAmount._sum.totalAmount ? Math.round(parseFloat(totalAmount._sum.totalAmount.toString()) * 1000) / 1000 : 0
     };
   }
 
@@ -302,8 +355,8 @@ class InvoiceService {
         fbrStatus: 'posted'
       };
 
-      // Update invoice number if it was not assigned and we got one from the response
-      if ((!invoice.invoiceNumber || invoice.invoiceNumber === 'Not Assigned') && postResponse.invoiceNumber) {
+      // Always update invoice number with FBR response invoice number
+      if (postResponse.invoiceNumber) {
         updateData.invoiceNumber = postResponse.invoiceNumber;
       }
 

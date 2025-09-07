@@ -1,5 +1,17 @@
 .app-layout {
   min-height: 100vh;
+  background-color: var(--fiskl-bg-layout);
+  color: var(--fiskl-text-primary);
+}
+
+.auth-container {
+  min-height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  background: var(--fiskl-bg-primary);
 }
 
 .mobile-overlay {
@@ -30,6 +42,7 @@
   box-shadow: 2px 0 6px rgba(0, 21, 41, 0.35);
   z-index: 1001;
   transition: all 0.2s;
+  background-color: var(--fiskl-bg-primary);
 }
 
 .menu-sidebar.mobile {
@@ -50,7 +63,8 @@
   padding: 0;
   height: 64px;
   line-height: 64px;
-  background: #fff;
+  background: var(--fiskl-bg-primary);
+  color: var(--fiskl-text-primary);
   box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
   transition: left 0.2s;
 }
@@ -64,7 +78,8 @@
   margin-top: 64px;
   transition: margin-left 0.2s;
   min-height: calc(100vh - 64px);
-  background: #f0f2f5;
+  background: var(--fiskl-bg-layout);
+  color: var(--fiskl-text-primary);
 }
 
 .app-content.collapsed {

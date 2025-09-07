@@ -1,1 +1,493 @@
 @import "@ng-select/ng-select/themes/default.theme.css";
+
+/* =============================================================================
+   FISKL GLOBAL STYLES
+   =============================================================================
+   Global styles that complement the NG-ZORRO theme
+   Uses CSS variables from tokens.css for consistency
+   ============================================================================= */
+
+/* Apply theme font family globally */
+* {
+  font-family: var(--fiskl-font-family);
+}
+
+/* Ensure consistent box-sizing */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Root element theming */
+html {
+  font-size: var(--fiskl-font-size-base);
+  line-height: var(--fiskl-line-height-base);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--fiskl-bg-layout);
+  color: var(--fiskl-text-primary);
+  font-family: var(--fiskl-font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* =============================================================================
+   GLOBAL UTILITY CLASSES
+   ============================================================================= */
+
+/* Remove login page background from components now using theme */
+.login-container {
+  background: var(--fiskl-gradient-primary) !important;
+}
+
+.login-card {
+  background: var(--fiskl-bg-primary) !important;
+  border-radius: var(--fiskl-radius-lg) !important;
+  box-shadow: var(--fiskl-shadow-lg) !important;
+  padding: var(--fiskl-spacing-xxl) !important;
+}
+
+/* Apply gradient to app header for branded experience */
+.app-header {
+  background: var(--fiskl-gradient-subtle) !important;
+  backdrop-filter: blur(10px);
+}
+
+/* Ensure login form uses theme tokens */
+.login-form {
+  .form-control {
+    padding: var(--fiskl-input-padding-y) var(--fiskl-input-padding-x) !important;
+    border: 1px solid var(--fiskl-border-base) !important;
+    border-radius: var(--fiskl-radius-sm) !important;
+    font-size: var(--fiskl-font-size-base) !important;
+
+    &:focus {
+      border-color: var(--fiskl-border-focus) !important;
+      box-shadow: var(--fiskl-shadow-focus) !important;
+    }
+  }
+
+  .login-btn {
+    background: var(--fiskl-gradient-primary) !important;
+    border: none !important;
+    border-radius: var(--fiskl-radius-sm) !important;
+    padding: 14px var(--fiskl-spacing-lg) !important;
+    font-size: var(--fiskl-font-size-base) !important;
+    font-weight: var(--fiskl-font-weight-semibold) !important;
+  }
+}
+
+/* =============================================================================
+   ACCESSIBILITY IMPROVEMENTS
+   ============================================================================= */
+
+/* Enhanced focus states */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--fiskl-primary-main);
+  outline-offset: 2px;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--fiskl-primary-main);
+  color: var(--fiskl-text-inverse);
+  padding: 8px;
+  z-index: 1000;
+  border-radius: var(--fiskl-radius-sm);
+  text-decoration: none;
+
+  &:focus {
+    top: 6px;
+  }
+}
+
+/* =============================================================================
+   RESPONSIVE TYPOGRAPHY
+   ============================================================================= */
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--fiskl-text-primary);
+  margin: 0 0 var(--fiskl-spacing-md) 0;
+  font-weight: var(--fiskl-font-weight-semibold);
+  line-height: var(--fiskl-line-height-tight);
+}
+
+h1 { font-size: var(--fiskl-font-size-xxl); }
+h2 { font-size: var(--fiskl-font-size-xl); }
+h3 { font-size: var(--fiskl-font-size-lg); }
+h4, h5, h6 { font-size: var(--fiskl-font-size-base); }
+
+p {
+  margin: 0 0 var(--fiskl-spacing-md) 0;
+  color: var(--fiskl-text-secondary);
+}
+
+small {
+  font-size: var(--fiskl-font-size-sm);
+  color: var(--fiskl-text-tertiary);
+}
+
+/* =============================================================================
+   LINK STYLES
+   ============================================================================= */
+
+a {
+  color: var(--fiskl-primary-main);
+  text-decoration: none;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: var(--fiskl-primary-dark);
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--fiskl-primary-main);
+    outline-offset: 2px;
+  }
+}
+
+/* =============================================================================
+   SCROLLBAR STYLING
+   ============================================================================= */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--fiskl-bg-secondary);
+  border-radius: var(--fiskl-radius-sm);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--fiskl-border-dark);
+  border-radius: var(--fiskl-radius-sm);
+
+  &:hover {
+    background: var(--fiskl-primary-light);
+  }
+}
+
+/* =============================================================================
+   DARK THEME SPECIFIC ADJUSTMENTS
+   ============================================================================= */
+
+[data-theme="dark"] {
+  /* Enhanced scrollbar for dark theme */
+  ::-webkit-scrollbar-track {
+    background: var(--fiskl-bg-tertiary);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--fiskl-border-base);
+
+    &:hover {
+      background: var(--fiskl-primary-main);
+    }
+  }
+
+  /* Fix input text visibility in dark mode */
+  input,
+  textarea,
+  select,
+  .ant-input,
+  .ant-input-number-input,
+  .ant-select-selector,
+  .ant-cascader-picker,
+  .ant-picker-input input,
+  .ant-mentions,
+  .form-control,
+  .field__input input,
+  nz-input-number input,
+  nz-select .ant-select-selector,
+  nz-date-picker input {
+    color: var(--fiskl-text-primary) !important;
+    background-color: var(--fiskl-bg-secondary) !important;
+    border-color: var(--fiskl-border-base) !important;
+
+    &::placeholder {
+      color: var(--fiskl-text-tertiary) !important;
+    }
+
+    &:focus,
+    &:focus-within {
+      color: var(--fiskl-text-primary) !important;
+      background-color: var(--fiskl-bg-secondary) !important;
+      border-color: var(--fiskl-border-focus) !important;
+    }
+
+    &:disabled {
+      color: var(--fiskl-text-disabled) !important;
+      background-color: var(--fiskl-bg-tertiary) !important;
+    }
+  }
+
+  /* Fix ng-select dropdown text visibility */
+  .ng-select.ng-select-single .ng-select-container {
+    color: var(--fiskl-text-primary) !important;
+    background-color: var(--fiskl-bg-secondary) !important;
+    border-color: var(--fiskl-border-base) !important;
+  }
+
+  .ng-select .ng-placeholder {
+    color: var(--fiskl-text-tertiary) !important;
+  }
+
+  .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+    color: var(--fiskl-text-primary) !important;
+    background-color: var(--fiskl-bg-secondary) !important;
+
+    &:hover,
+    &.ng-option-highlighted {
+      background-color: var(--fiskl-bg-tertiary) !important;
+    }
+
+    &.ng-option-selected {
+      background-color: var(--fiskl-primary-main) !important;
+      color: var(--fiskl-text-inverse) !important;
+    }
+  }
+
+  /* Fix specific component input overrides */
+  .login-form .form-control {
+    color: var(--fiskl-text-primary) !important;
+    background-color: var(--fiskl-bg-secondary) !important;
+  }
+
+  /* Ensure invoice form inputs are visible */
+  .invoice-form-container {
+    input,
+    textarea,
+    select,
+    .ant-input,
+    .ant-input-number-input {
+      color: var(--fiskl-text-primary) !important;
+      background-color: var(--fiskl-bg-secondary) !important;
+    }
+  }
+
+  /* Fix all Ant Design components for dark mode */
+  .ant-layout,
+  .ant-layout-content,
+  .ant-layout-header,
+  .ant-layout-sider {
+    background-color: var(--fiskl-bg-primary) !important;
+    color: var(--fiskl-text-primary) !important;
+  }
+
+  .ant-card {
+    background-color: var(--fiskl-bg-primary) !important;
+    color: var(--fiskl-text-primary) !important;
+    border-color: var(--fiskl-border-base) !important;
+
+    .ant-card-head {
+      background-color: var(--fiskl-bg-primary) !important;
+      color: var(--fiskl-text-primary) !important;
+      border-bottom-color: var(--fiskl-border-base) !important;
+
+      .ant-card-head-title {
+        color: var(--fiskl-text-primary) !important;
+      }
+    }
+
+    .ant-card-body {
+      background-color: var(--fiskl-bg-primary) !important;
+      color: var(--fiskl-text-primary) !important;
+    }
+  }
+
+  .ant-table,
+  .ant-table-wrapper {
+    background-color: var(--fiskl-bg-primary) !important;
+    color: var(--fiskl-text-primary) !important;
+
+    .ant-table-thead > tr > th {
+      background-color: var(--fiskl-bg-secondary) !important;
+      color: var(--fiskl-text-primary) !important;
+      border-bottom-color: var(--fiskl-border-base) !important;
+    }
+
+    .ant-table-tbody > tr > td {
+      background-color: var(--fiskl-bg-primary) !important;
+      color: var(--fiskl-text-primary) !important;
+      border-bottom-color: var(--fiskl-border-base) !important;
+    }
+
+    .ant-table-tbody > tr:hover > td {
+      background-color: var(--fiskl-bg-secondary) !important;
+    }
+  }
+
+  .ant-menu {
+    background-color: var(--fiskl-bg-primary) !important;
+    color: var(--fiskl-text-primary) !important;
+
+    .ant-menu-item {
+      color: var(--fiskl-text-primary) !important;
+
+      &:hover {
+        background-color: var(--fiskl-bg-secondary) !important;
+      }
+
+      &.ant-menu-item-selected {
+        background-color: var(--fiskl-primary-main) !important;
+        color: var(--fiskl-text-inverse) !important;
+      }
+    }
+
+    .ant-menu-submenu {
+      .ant-menu-submenu-title {
+        color: var(--fiskl-text-primary) !important;
+
+        &:hover {
+          background-color: var(--fiskl-bg-secondary) !important;
+        }
+      }
+    }
+  }
+
+  .ant-dropdown {
+    .ant-dropdown-menu {
+      background-color: var(--fiskl-bg-primary) !important;
+      border-color: var(--fiskl-border-base) !important;
+
+      .ant-dropdown-menu-item {
+        color: var(--fiskl-text-primary) !important;
+
+        &:hover {
+          background-color: var(--fiskl-bg-secondary) !important;
+        }
+      }
+    }
+  }
+
+  .ant-breadcrumb {
+    color: var(--fiskl-text-secondary) !important;
+
+    .ant-breadcrumb-link {
+      color: var(--fiskl-text-secondary) !important;
+
+      &:hover {
+        color: var(--fiskl-primary-main) !important;
+      }
+    }
+
+    .ant-breadcrumb-separator {
+      color: var(--fiskl-text-tertiary) !important;
+    }
+  }
+
+  .ant-tooltip {
+    .ant-tooltip-inner {
+      background-color: var(--fiskl-bg-tertiary) !important;
+      color: var(--fiskl-text-primary) !important;
+    }
+
+    .ant-tooltip-arrow::before {
+      background-color: var(--fiskl-bg-tertiary) !important;
+    }
+  }
+
+  /* Fix form labels and general text elements */
+  .ant-form-item-label > label {
+    color: var(--fiskl-text-primary) !important;
+  }
+
+  .ant-typography,
+  .ant-typography h1,
+  .ant-typography h2,
+  .ant-typography h3,
+  .ant-typography h4,
+  .ant-typography h5,
+  .ant-typography h6,
+  .ant-typography p {
+    color: var(--fiskl-text-primary) !important;
+  }
+
+  /* Fix invoice form specific elements */
+  .page-header h1 {
+    color: var(--fiskl-text-primary) !important;
+  }
+
+  .form-card {
+    background-color: var(--fiskl-bg-primary) !important;
+    color: var(--fiskl-text-primary) !important;
+    border-color: var(--fiskl-border-base) !important;
+  }
+
+  .card-header {
+    background-color: var(--fiskl-bg-primary) !important;
+    color: var(--fiskl-text-primary) !important;
+    border-bottom-color: var(--fiskl-border-base) !important;
+  }
+
+  .card-title {
+    color: var(--fiskl-text-primary) !important;
+  }
+
+  .items-summary {
+    background-color: var(--fiskl-bg-secondary) !important;
+    color: var(--fiskl-text-primary) !important;
+  }
+
+  .form-actions {
+    background-color: var(--fiskl-bg-secondary) !important;
+    color: var(--fiskl-text-primary) !important;
+  }
+
+  .item-card {
+    background-color: var(--fiskl-bg-primary) !important;
+    color: var(--fiskl-text-primary) !important;
+    border-color: var(--fiskl-border-base) !important;
+  }
+
+  .item-card__title {
+    color: var(--fiskl-text-primary) !important;
+  }
+
+  .field__label {
+    color: var(--fiskl-text-secondary) !important;
+  }
+
+  .total-display {
+    background-color: var(--fiskl-bg-secondary) !important;
+    color: var(--fiskl-primary-main) !important;
+    border-color: var(--fiskl-border-base) !important;
+  }
+}
+
+/* =============================================================================
+   PRINT STYLES
+   ============================================================================= */
+
+@media print {
+  * {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  a[href]:after {
+    content: " (" attr(href) ")";
+  }
+}

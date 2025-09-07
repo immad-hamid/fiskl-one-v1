@@ -36,6 +36,7 @@
             ],
             "styles": [
               "src/theme.less",
+              "src/styles/tokens.css",
               "src/styles.scss"
             ]
           },

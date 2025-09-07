@@ -8,6 +8,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+    // recompute chain when sellerProvinceCode changes (origination supplier)import { ActivatedRoute, Router } from '@angular/router';
 
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCardModule } from 'ng-zorro-antd/card';
@@ -29,7 +30,10 @@ import { Invoice } from '../../../core/models/invoice';
 import { InvoiceService } from '../../../core/services/invoice.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { FbrLookupService } from '../../../core/services/fbr-lookup.service';
-import { Subscription, combineLatest } from 'rxjs';
+import { ProfileService } from '../../../core/services/profile.service';
+import { Profile } from '../../../core/models/profile';
+import { Subscription, combineLatest, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { scenarioTypes } from '../../../constants/constants';
 
 @Component({
@@ -66,10 +70,14 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
   // dropdown data
   provinceOptions: { code: number; description: string }[] = [];
   hsCodeOptions: { hsCode: string; description: string }[] = [];
+  filteredHsCodeOptions: { hsCode: string; description: string }[] = [];
   uomOptions: { id: number; name: string }[] = [];
   saleTypeOptions: { id: number; description: string }[] = [];
+  profiles: Profile[] = [];
 
   private subs = new Subscription();
+  private hsCodeSearchSubject = new Subject<string>();
+  
   scenarioTypes: {
     id: string;
     desc: string;
@@ -83,7 +91,8 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     private router: Router,
     private invoiceService: InvoiceService,
     private notificationService: NotificationService,
-    private fbr: FbrLookupService
+    private fbr: FbrLookupService,
+    private profileService: ProfileService
   ) {
     this.invoiceForm = this.createForm();
   }
@@ -94,15 +103,33 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     const s1 = this.fbr
       .getProvinces()
       .subscribe((v) => (this.provinceOptions = v));
-    const s2 = this.fbr.getHsCodes().subscribe((v) => (this.hsCodeOptions = v));
+    const s2 = this.fbr.getHsCodes().subscribe((v) => {
+      this.hsCodeOptions = v;
+      // Initialize with first 50 items for better performance
+      this.filteredHsCodeOptions = v.slice(0, 50);
+    });
     const s3 = this.fbr.getUoms().subscribe((v) => (this.uomOptions = v));
     const s4 = this.fbr
       .getTransactionTypes()
       .subscribe((v) => (this.saleTypeOptions = v));
+    const s5 = this.profileService
+      .getProfiles()
+      .subscribe((response) => (this.profiles = response.data));
     this.subs.add(s1);
     this.subs.add(s2);
     this.subs.add(s3);
     this.subs.add(s4);
+    this.subs.add(s5);
+
+    // Setup debounced HS code search
+    this.subs.add(
+      this.hsCodeSearchSubject
+        .pipe(
+          debounceTime(300), // Wait 300ms after user stops typing
+          distinctUntilChanged() // Only trigger if the search term changed
+        )
+        .subscribe(searchTerm => this.performHsCodeSearch(searchTerm))
+    );
 
     // track province code (for origination supplier) when province text changes
     this.subs.add(
@@ -132,6 +159,7 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
   private syncProvinceCodes(): void {
     const seller = this.invoiceForm.get('sellerProvince')!.value;
     const buyer = this.invoiceForm.get('buyerProvince')!.value;
+    
     const sellerMatch = this.provinceOptions.find(
       (p) => p.description === seller
     );
@@ -146,6 +174,48 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
       },
       { emitEvent: false }
     );
+  }
+
+  private ensureProvincesAndFetchRates(itemGroup: FormGroup): void {
+    // First ensure province codes are synced
+    this.syncProvinceCodes();
+    
+    // Use a more robust retry mechanism with increasing delays
+    let retryCount = 0;
+    const maxRetries = 5;
+    
+    const tryFetchRates = () => {
+      const sellerProvinceCode = this.invoiceForm.get('sellerProvinceCode')?.value;
+      
+      if (sellerProvinceCode) {
+        // Province code is available, fetch rates
+        this.fetchRateForItem(itemGroup);
+      } else if (retryCount < maxRetries) {
+        // Province code not ready, retry with exponential backoff
+        retryCount++;
+        const delay = Math.min(100 * Math.pow(2, retryCount), 2000); // 200ms, 400ms, 800ms, 1600ms, 2000ms
+        setTimeout(() => {
+          this.syncProvinceCodes(); // Try syncing again
+          tryFetchRates();
+        }, delay);
+      } else {
+        console.warn('Could not sync province codes after multiple retries');
+      }
+    };
+    
+    // Start the process
+    tryFetchRates();
+  }
+
+  private refreshRatesForAllItems(): void {
+    // Refresh rate fetching for all items that have sale types selected
+    this.itemsFormArray.controls.forEach((itemControl) => {
+      const saleType = itemControl.get('saleType')?.value;
+      if (saleType) {
+        // This item has a sale type selected, refresh its rates
+        this.ensureProvincesAndFetchRates(itemControl as FormGroup);
+      }
+    });
   }
 
   createForm(): FormGroup {
@@ -204,9 +274,17 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
       grp.get('saleType')!.valueChanges.subscribe((desc: string | null) => {
         if (desc !== null) {
           const tt = this.saleTypeOptions.find((x) => x.description === desc);
-          grp.patchValue({ transTypeId: tt?.id ?? null }, { emitEvent: false });
-          // when sale type changes, recompute the chain
-          this.fetchRateForItem(grp);
+          
+          // Reset SRO fields immediately when sale type changes
+          grp.patchValue({ 
+            transTypeId: tt?.id ?? null,
+            sroScheduleNo: '',
+            sroItemSerialNo: '',
+            sroId: null
+          }, { emitEvent: false });
+          
+          // Ensure province codes are synced before fetching rates
+          this.ensureProvincesAndFetchRates(grp);
         }
       })
     );
@@ -218,6 +296,54 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
       })
     );
 
+    // Add subscriptions to recalculate totals when key fields change
+    // We need to defer this to get the correct index after the form is added
+    setTimeout(() => {
+      const itemIndex = this.itemsFormArray.controls.indexOf(grp);
+      
+      // Recalculate when quantity changes
+      this.subs.add(
+        grp.get('quantity')!.valueChanges.subscribe(() => {
+          this.calculateItemTotal(itemIndex);
+        })
+      );
+      
+      // Recalculate when unit price changes
+      this.subs.add(
+        grp.get('valueSalesExcludingST')!.valueChanges.subscribe(() => {
+          this.calculateItemTotal(itemIndex);
+        })
+      );
+      
+      // Recalculate when tax rate changes
+      this.subs.add(
+        grp.get('salesTaxApplicable')!.valueChanges.subscribe(() => {
+          this.calculateItemTotal(itemIndex);
+        })
+      );
+      
+      // Recalculate when discount changes
+      this.subs.add(
+        grp.get('discount')!.valueChanges.subscribe(() => {
+          this.calculateItemTotal(itemIndex);
+        })
+      );
+      
+      // Recalculate when further tax changes
+      this.subs.add(
+        grp.get('furtherTax')!.valueChanges.subscribe(() => {
+          this.calculateItemTotal(itemIndex);
+        })
+      );
+      
+      // Recalculate when FED payable changes
+      this.subs.add(
+        grp.get('fedPayable')!.valueChanges.subscribe(() => {
+          this.calculateItemTotal(itemIndex);
+        })
+      );
+    }, 0);
+
     return grp;
   }
 
@@ -226,7 +352,9 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     const origSupplier: number | null =
       this.invoiceForm.get('sellerProvinceCode')!.value;
 
-    if (!transTypeId || !origSupplier) return;
+    if (!transTypeId || !origSupplier) {
+      return;
+    }
 
     this.fbr.getSaleTypeToRate(transTypeId, origSupplier).subscribe({
       next: (rates) => {
@@ -237,14 +365,23 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
           {
             rate: r.ratE_DESC, // set the human-readable rate in your form
             rateId: r.ratE_ID,
+            salesTaxApplicable: r.ratE_VALUE, // set the actual tax percentage value
           },
           { emitEvent: false }
         );
 
+        // Recalculate item total after tax rate is updated
+        const itemIndex = this.itemsFormArray.controls.indexOf(itemGroup);
+        if (itemIndex >= 0) {
+          this.calculateItemTotal(itemIndex);
+        }
+
         // Next: SRO schedule
         this.fetchSroScheduleForItem(itemGroup);
       },
-      error: () => {},
+      error: (error) => {
+        console.error('Error fetching rates:', error);
+      },
     });
   }
 
@@ -311,26 +448,38 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
 
   calculateItemTotal(index: number): void {
     const item = this.itemsFormArray.at(index);
-    const quantity = item.get('quantity')?.value || 0;
-    const unitPrice = item.get('valueSalesExcludingST')?.value || 0;
-    const salesTax = item.get('salesTaxApplicable')?.value || 0;
-    const discount = item.get('discount')?.value || 0;
-    const furtherTax = item.get('furtherTax')?.value || 0;
-    const fedPayable = item.get('fedPayable')?.value || 0;
+    const valueExcludingST = parseFloat(item.get('valueSalesExcludingST')?.value) || 0;
+    const rateString = item.get('rate')?.value || '';
+    const discount = parseFloat(item.get('discount')?.value) || 0;
+    const furtherTax = parseFloat(item.get('furtherTax')?.value) || 0;
+    const fedPayable = parseFloat(item.get('fedPayable')?.value) || 0;
 
-    const baseTotal = quantity * unitPrice;
-    const totalValue =
-      baseTotal * (1 + salesTax / 100 + furtherTax / 100) +
-      fedPayable -
-      discount;
+    // Extract percentage from rate string (e.g., "18%" -> 18)
+    const ratePercentage = parseFloat(rateString.replace('%', '')) || 0;
+    
+    // Calculate sales tax amount using rate percentage
+    const salesTaxAmount = valueExcludingST * (ratePercentage / 100);
+    
+    // Calculate total value: valueSalesExcludingST + salesTaxAmount + furtherTax + fedPayable - discount
+    const totalValue = valueExcludingST + salesTaxAmount + (valueExcludingST * furtherTax / 100) + fedPayable - discount;
+
+    // Round for precision
+    const roundedSalesTaxAmount = Math.round(salesTaxAmount * 100) / 100;
+    const roundedTotalValue = Math.round(totalValue * 100) / 100;
 
     item.patchValue(
       {
-        totalValues: totalValue,
-        fixedNotifiedValueOrRetailPrice: unitPrice,
+        fixedNotifiedValueOrRetailPrice: valueExcludingST, // Same as valueSalesExcludingST by default
+        salesTaxApplicable: roundedSalesTaxAmount, // Calculated tax amount (not percentage)
+        totalValues: roundedTotalValue // Final total
       },
       { emitEvent: false }
     );
+  }
+
+  recalculateItemTotal(index: number): void {
+    // Same calculation as calculateItemTotal but with user confirmation
+    this.calculateItemTotal(index);
   }
 
   getItemTotal(index: number): number {
@@ -385,17 +534,43 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
       scenarioId: invoice.scenarioId,
     });
 
-    // ensure province codes sync after setting values
-    this.syncProvinceCodes();
+    // Check if province options are loaded, if not wait for them
+    if (this.provinceOptions.length === 0) {
+      // Wait for province options to load
+      const checkProvinceOptions = () => {
+        if (this.provinceOptions.length > 0) {
+          this.syncProvinceCodes();
+          this.addItemsAfterSync(invoice);
+        } else {
+          setTimeout(checkProvinceOptions, 100);
+        }
+      };
+      setTimeout(checkProvinceOptions, 100);
+    } else {
+      // Province options already loaded, proceed normally
+      this.syncProvinceCodes();
+      this.addItemsAfterSync(invoice);
+    }
+  }
 
-    // Add items
-    invoice.items.forEach((itm) => {
-      const itemForm = this.createItemForm();
-      itemForm.patchValue(itm);
-      this.itemsFormArray.push(itemForm);
-      // kick off cascades for existing data (if needed)
-      this.fetchRateForItem(itemForm);
-    });
+  private addItemsAfterSync(invoice: Invoice): void {
+    // Wait a bit more to ensure province codes are set
+    setTimeout(() => {
+      const sellerProvinceCode = this.invoiceForm.get('sellerProvinceCode')?.value;
+      
+      // Add items after province codes are properly set
+      invoice.items.forEach((itm, index) => {
+        const itemForm = this.createItemForm();
+        itemForm.patchValue(itm);
+        this.itemsFormArray.push(itemForm);
+        
+        // Only trigger cascade if we have the required province code
+        if (sellerProvinceCode && itm.saleType) {
+          // Set the sale type which will trigger the cascade
+          itemForm.patchValue({ saleType: itm.saleType }, { emitEvent: true });
+        }
+      });
+    }, 200); // Increased delay to ensure province codes are set
   }
 
   onSubmit(): void {
@@ -481,5 +656,125 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
 
   goBack(): void {
     this.router.navigate(['/invoices/list']);
+  }
+
+  // HS Code search optimization methods
+  onHsCodeSearch(searchEvent: any): void {
+    let searchTerm = '';
+    
+    // Handle different types of search events from ng-select
+    if (typeof searchEvent === 'string') {
+      searchTerm = searchEvent;
+    } else if (searchEvent && typeof searchEvent.term === 'string') {
+      searchTerm = searchEvent.term;
+    } else if (searchEvent && typeof searchEvent === 'object' && searchEvent.target && searchEvent.target.value) {
+      searchTerm = searchEvent.target.value;
+    }
+    
+    // Use the debounced search subject
+    this.hsCodeSearchSubject.next(searchTerm);
+  }
+
+  private performHsCodeSearch(searchTerm: string): void {
+    // Ensure searchTerm is a string and handle null/undefined cases
+    const term = typeof searchTerm === 'string' ? searchTerm : '';
+    
+    if (!term || term.length < 2) {
+      // Show first 50 items when no search or search is too short
+      this.filteredHsCodeOptions = this.hsCodeOptions.slice(0, 50);
+      return;
+    }
+
+    // Filter based on search term
+    const searchLower = term.toLowerCase();
+    const filtered = this.hsCodeOptions.filter(option => 
+      option.hsCode.toLowerCase().includes(searchLower) ||
+      option.description.toLowerCase().includes(searchLower)
+    );
+
+    // Limit to 100 results for performance
+    this.filteredHsCodeOptions = filtered.slice(0, 100);
+  }
+
+  onHsCodeScrollToEnd(): void {
+    // Load more items when scrolling to end (if not searching)
+    if (this.filteredHsCodeOptions.length < this.hsCodeOptions.length) {
+      const currentLength = this.filteredHsCodeOptions.length;
+      const nextBatch = this.hsCodeOptions.slice(currentLength, currentLength + 50);
+      this.filteredHsCodeOptions = [...this.filteredHsCodeOptions, ...nextBatch];
+    }
+  }
+
+  // Profile integration methods
+  populateSellerFromProfile(profileId: number | null): void {
+    console.log('populateSellerFromProfile called with:', profileId, 'type:', typeof profileId);
+    console.log('Available profiles:', this.profiles);
+    
+    if (!profileId) {
+      return; // Don't clear fields when dropdown is cleared
+    }
+    
+    // Convert profileId to number if it's a string
+    const numericProfileId = typeof profileId === 'string' ? parseInt(profileId, 10) : profileId;
+    console.log('Searching for profile with ID:', numericProfileId);
+    
+    const profile = this.profiles.find(p => {
+      console.log('Comparing profile ID:', p.id, 'type:', typeof p.id, 'with search ID:', numericProfileId);
+      return p.id === numericProfileId;
+    });
+    console.log('Found profile:', profile);
+    
+    if (profile) {
+      this.invoiceForm.patchValue({
+        sellerNTNCNIC: profile.ntncnic,
+        sellerBusinessName: profile.businessName,
+        sellerProvince: profile.province,
+        sellerAddress: profile.address
+      });
+      console.log('Form patched with seller profile data');
+      
+      // Trigger province code sync after populating
+      setTimeout(() => {
+        this.syncProvinceCodes();
+        // Also trigger rate fetching for any items that have sale types selected
+        this.refreshRatesForAllItems();
+      }, 200);
+    }
+  }
+
+  populateBuyerFromProfile(profileId: number | null): void {
+    console.log('populateBuyerFromProfile called with:', profileId, 'type:', typeof profileId);
+    
+    if (!profileId) {
+      return; // Don't clear fields when dropdown is cleared
+    }
+    
+    // Convert profileId to number if it's a string
+    const numericProfileId = typeof profileId === 'string' ? parseInt(profileId, 10) : profileId;
+    console.log('Searching for profile with ID:', numericProfileId);
+    
+    const profile = this.profiles.find(p => {
+      console.log('Comparing profile ID:', p.id, 'type:', typeof p.id, 'with search ID:', numericProfileId);
+      return p.id === numericProfileId;
+    });
+    console.log('Found profile:', profile);
+    
+    if (profile) {
+      this.invoiceForm.patchValue({
+        buyerNTNCNIC: profile.ntncnic,
+        buyerBusinessName: profile.businessName,
+        buyerProvince: profile.province,
+        buyerAddress: profile.address,
+        buyerRegistrationType: profile.registrationType
+      });
+      console.log('Form patched with buyer profile data');
+      
+      // Trigger province code sync after populating
+      setTimeout(() => {
+        this.syncProvinceCodes();
+        // Also trigger rate fetching for any items that have sale types selected
+        this.refreshRatesForAllItems();
+      }, 200);
+    }
   }
 }

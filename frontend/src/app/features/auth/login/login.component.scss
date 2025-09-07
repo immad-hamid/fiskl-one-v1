@@ -1,0 +1,108 @@
+// Login styles now use theme tokens from global styles.scss
+// This ensures consistency and supports theme switching
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: var(--fiskl-spacing-lg);
+  // Background applied via global styles using theme tokens
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  // Background, border-radius, shadow, padding applied via global styles
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: var(--fiskl-spacing-xl);
+
+  h1 {
+    color: var(--fiskl-text-primary);
+    margin: 0 0 var(--fiskl-spacing-sm) 0;
+    font-size: var(--fiskl-font-size-xxl);
+    font-weight: var(--fiskl-font-weight-bold);
+  }
+
+  p {
+    color: var(--fiskl-text-secondary);
+    margin: 0;
+    font-size: var(--fiskl-font-size-base);
+  }
+}
+
+.login-form {
+  .form-group {
+    margin-bottom: var(--fiskl-spacing-lg);
+
+    label {
+      display: block;
+      margin-bottom: var(--fiskl-spacing-xs);
+      color: var(--fiskl-text-primary);
+      font-weight: var(--fiskl-font-weight-medium);
+      font-size: var(--fiskl-font-size-sm);
+    }
+
+    // Form control styles now handled by global theme styles
+  }
+
+  .error-message {
+    background-color: color-mix(in srgb, var(--fiskl-error) 10%, var(--fiskl-bg-primary));
+    color: var(--fiskl-error);
+    padding: var(--fiskl-spacing-sm);
+    border-radius: var(--fiskl-radius-sm);
+    margin-bottom: var(--fiskl-spacing-lg);
+    border: 1px solid color-mix(in srgb, var(--fiskl-error) 20%, transparent);
+    font-size: var(--fiskl-font-size-sm);
+  }
+
+  // Button styles now handled by global theme styles
+  .login-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--fiskl-spacing-sm);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--fiskl-text-inverse);
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: var(--fiskl-spacing-lg);
+  padding-top: var(--fiskl-spacing-lg);
+  border-top: 1px solid var(--fiskl-border-light);
+
+  p {
+    color: var(--fiskl-text-tertiary);
+    font-size: var(--fiskl-font-size-xs);
+    margin: 0;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

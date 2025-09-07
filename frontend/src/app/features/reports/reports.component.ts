@@ -268,7 +268,7 @@ interface ReportData {
                     </td>
                     <td>{{ invoice.buyerBusinessName }}</td>
                     <td>{{ invoice.invoiceDate | date : 'dd/MM/yyyy' }}</td>
-                    <td>PKR {{ invoice.totalAmount | number : '1.2-2' }}</td>
+                    <td>PKR {{ formatAmount(invoice.totalAmount) }}</td>
                     <td>
                       <nz-tag [nzColor]="getStatusColor(invoice.status!)">
                         {{ invoice.status | titlecase }}
@@ -423,12 +423,17 @@ export class ReportsComponent implements OnInit {
     return filters;
   }
   processReportData(invoices: Invoice[]): void {
-    const totalAmount = invoices.reduce(
-      (sum, inv) => sum + (inv.totalAmount || 0),
-      0
-    );
-    const averageAmount =
-      invoices.length > 0 ? totalAmount / invoices.length : 0;
+    const totalAmount = invoices.reduce((sum, inv) => {
+      // Safely convert totalAmount to number
+      const amount = parseFloat(String(inv.totalAmount || 0));
+      return sum + (isNaN(amount) ? 0 : amount);
+    }, 0);
+    
+    const averageAmount = invoices.length > 0 ? totalAmount / invoices.length : 0;
+
+    // Round to 4 decimal places to avoid floating-point errors
+    const roundedTotal = Math.round(totalAmount * 10000) / 10000;
+    const roundedAverage = Math.round(averageAmount * 10000) / 10000;
     // Group by status
     const byStatus: { [key: string]: number } = {};
     invoices.forEach((inv) => {
@@ -447,8 +452,8 @@ export class ReportsComponent implements OnInit {
 
     this.reportData = {
       totalInvoices: invoices.length,
-      totalAmount,
-      averageAmount,
+      totalAmount: roundedTotal,
+      averageAmount: roundedAverage,
       byStatus,
       byType,
       monthlyData,
@@ -466,7 +471,7 @@ export class ReportsComponent implements OnInit {
       if (!monthlyMap[month]) {
         monthlyMap[month] = { amount: 0, count: 0 };
       }
-      monthlyMap[month].amount += inv.totalAmount || 0;
+      monthlyMap[month].amount += parseFloat(String(inv.totalAmount || 0)) || 0;
       monthlyMap[month].count += 1;
     });
 
@@ -477,7 +482,8 @@ export class ReportsComponent implements OnInit {
   getCompletionRate(): number {
     if (!this.reportData || this.reportData.totalInvoices === 0) return 0;
     const completed = this.reportData.byStatus['completed'] || 0;
-    return (completed / this.reportData.totalInvoices) * 100;
+    const rate = (completed / this.reportData.totalInvoices) * 100;
+    return isNaN(rate) ? 0 : Math.round(rate * 100) / 100; // Round to 2 decimal places
   }
   getStatusBreakdown(): {
     status: string;
@@ -485,19 +491,29 @@ export class ReportsComponent implements OnInit {
     percentage: number;
   }[] {
     if (!this.reportData) return [];
-    return Object.entries(this.reportData.byStatus).map(([status, count]) => ({
-      status,
-      count,
-      percentage: (count / this.reportData!.totalInvoices) * 100,
-    }));
+    return Object.entries(this.reportData.byStatus).map(([status, count]) => {
+      const percentage = this.reportData!.totalInvoices > 0 
+        ? (count / this.reportData!.totalInvoices) * 100 
+        : 0;
+      return {
+        status,
+        count,
+        percentage: isNaN(percentage) ? 0 : Math.round(percentage * 100) / 100
+      };
+    });
   }
   getTypeBreakdown(): { type: string; count: number; percentage: number }[] {
     if (!this.reportData) return [];
-    return Object.entries(this.reportData.byType).map(([type, count]) => ({
-      type,
-      count,
-      percentage: (count / this.reportData!.totalInvoices) * 100,
-    }));
+    return Object.entries(this.reportData.byType).map(([type, count]) => {
+      const percentage = this.reportData!.totalInvoices > 0 
+        ? (count / this.reportData!.totalInvoices) * 100 
+        : 0;
+      return {
+        type,
+        count,
+        percentage: isNaN(percentage) ? 0 : Math.round(percentage * 100) / 100
+      };
+    });
   }
   getStatusColor(status: string): string {
     const statusColors: { [key: string]: string } = {
@@ -508,6 +524,17 @@ export class ReportsComponent implements OnInit {
     };
     return statusColors[status.toLowerCase()] || 'default';
   }
+
+  formatAmount(amount: number | undefined): string {
+    if (amount === undefined || isNaN(amount)) return 'PKR 0.0000';
+    // Round to 4 decimal places and format with commas
+    const roundedAmount = Math.round(amount * 10000) / 10000;
+    return `PKR ${roundedAmount.toLocaleString('en-US', { 
+      minimumFractionDigits: 4, 
+      maximumFractionDigits: 4 
+    })}`;
+  }
+
   resetFilters(): void {
     this.filterForm.reset();
     const now = new Date();

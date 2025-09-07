@@ -82,7 +82,11 @@
       </nz-card>
 
       <!-- Seller Information -->
-      <nz-card nzTitle="Seller Information" class="form-card">
+      <nz-card
+        nzTitle="Seller Information"
+        class="form-card"
+        [nzExtra]="sellerPopulateTemp"
+      >
         <div nz-row [nzGutter]="16">
           <div nz-col nzXs="24" nzSm="12" nzMd="8">
             <nz-form-item>
@@ -141,9 +145,27 @@
           </div>
         </div>
       </nz-card>
+      <ng-template #sellerPopulateTemp>
+        <ng-select
+          class="profile-select"
+          placeholder="🏢 Use Profile..."
+          [clearable]="true"
+          [searchable]="false"
+          (change)="populateSellerFromProfile($event)"
+        >
+          <ng-option *ngFor="let profile of profiles" [value]="profile.id">
+            {{ profile.name }}
+            <small *ngIf="profile.isDefault"> (Default)</small>
+          </ng-option>
+        </ng-select>
+      </ng-template>
 
       <!-- Buyer Information -->
-      <nz-card nzTitle="Buyer Information" class="form-card">
+      <nz-card
+        nzTitle="Buyer Information"
+        class="form-card"
+        [nzExtra]="buyerPopulateTemp"
+      >
         <div nz-row [nzGutter]="16">
           <div nz-col nzXs="24" nzSm="12" nzMd="8">
             <nz-form-item>
@@ -217,236 +239,280 @@
           </div>
         </div>
       </nz-card>
+      <ng-template #buyerPopulateTemp>
+        <ng-select
+          class="profile-select"
+          placeholder="🏢 Use Profile..."
+          [clearable]="true"
+          [searchable]="false"
+          (change)="populateBuyerFromProfile($event)"
+        >
+          <ng-option *ngFor="let profile of profiles" [value]="profile.id">
+            {{ profile.name }}
+            <small *ngIf="profile.isDefault"> (Default)</small>
+          </ng-option>
+        </ng-select>
+      </ng-template>
 
-      <!-- Items Header -->
-      <div class="card-header" nz-card-head>
-        <div class="card-title">Invoice Items</div>
-        <div class="card-extra"></div>
-      </div>
+      <!-- Invoice Items -->
+      <ng-template #addInvoiceItemTemp>
+        <button nz-button nzType="primary" nzSize="small" (click)="addItem()">
+          <span nz-icon nzType="plus"></span>
+          Add Item
+        </button>
+      </ng-template>
+      <nz-card nzTitle="Invoice Items" class="form-card" [nzExtra]="addInvoiceItemTemp">
 
-      <!-- Items -->
-      @for (item of itemsFormArray.controls; track $index) {
-      <div formArrayName="items" class="items-grid">
-        <div class="item-card" [formGroupName]="$index">
-          <div class="item-card__header">
-            <div class="item-card__title">Item #{{ $index + 1 }}</div>
-            <button
-              nz-button
-              nzType="text"
-              nzDanger
-              nzSize="small"
-              nz-popconfirm
-              nzPopconfirmTitle="Remove this item?"
-              (nzOnConfirm)="removeItem($index)"
-              [disabled]="itemsFormArray.length === 1"
-              aria-label="Remove item"
-            >
-              <span nz-icon nzType="delete"></span>
-            </button>
-          </div>
-
-          <div class="item-card__fields">
-            <label class="field">
-              <span class="field__label">HS Code *</span>
-              <ng-select
-                class="field__input"
-                [items]="hsCodeOptions"
-                bindLabel="hsCode"
-                bindValue="hsCode"
-                formControlName="hsCode"
-                placeholder="Search HS code"
-                [searchable]="true"
+        <!-- Items -->
+        @for (item of itemsFormArray.controls; track $index) {
+        <div formArrayName="items" class="items-grid mb-2">
+          <div class="item-card" [formGroupName]="$index">
+            <div class="item-card__header">
+              <div class="item-card__title">Item #{{ $index + 1 }}</div>
+              <button
+                nz-button
+                nzType="text"
+                nzDanger
+                nzSize="small"
+                nz-popconfirm
+                nzPopconfirmTitle="Remove this item?"
+                (nzOnConfirm)="removeItem($index)"
+                [disabled]="itemsFormArray.length === 1"
+                aria-label="Remove item"
               >
-              </ng-select>
-            </label>
+                <span nz-icon nzType="delete"></span>
+              </button>
+            </div>
 
-            <label class="field field--wide">
-              <span class="field__label">Description *</span>
-              <input
-                nz-input
-                class="field__input"
-                formControlName="productDescription"
-                placeholder="Product description"
-              />
-            </label>
+            <div class="item-card__fields">
+              <label class="field">
+                <span class="field__label">HS Code *</span>
+                <ng-select
+                  class="field__input"
+                  [items]="filteredHsCodeOptions"
+                  bindLabel="hsCode"
+                  bindValue="hsCode"
+                  formControlName="hsCode"
+                  placeholder="Search HS code (type to filter)"
+                  [searchable]="true"
+                  [virtualScroll]="true"
+                  (search)="onHsCodeSearch($event)"
+                  (scrollToEnd)="onHsCodeScrollToEnd()"
+                  [clearSearchOnAdd]="false"
+                  [loading]="hsCodeOptions.length === 0"
+                >
+                  <ng-option
+                    *ngFor="let option of filteredHsCodeOptions"
+                    [value]="option.hsCode"
+                  >
+                    {{ option.hsCode }} - {{ option.description }}
+                  </ng-option>
+                </ng-select>
+              </label>
 
-            <label class="field field--wide">
-              <span class="field__label">Sale Type</span>
-              <ng-select
-                class="field__input"
-                [items]="saleTypeOptions"
-                bindLabel="description"
-                bindValue="description"
-                formControlName="saleType"
-                placeholder="Select sale type"
-                [clearable]="true"
-              >
-              </ng-select>
-            </label>
+              <label class="field field--wide">
+                <span class="field__label">Description *</span>
+                <input
+                  nz-input
+                  class="field__input"
+                  formControlName="productDescription"
+                  placeholder="Product description"
+                />
+              </label>
 
-            <label class="field">
-              <span class="field__label">Rate *</span>
-              <input
-                nz-input
-                class="field__input"
-                formControlName="rate"
-                placeholder="18% ..."
-              />
-            </label>
+              <label class="field field--wide">
+                <span class="field__label">Sale Type</span>
+                <ng-select
+                  class="field__input"
+                  [items]="saleTypeOptions"
+                  bindLabel="description"
+                  bindValue="description"
+                  formControlName="saleType"
+                  placeholder="Select sale type"
+                  [clearable]="true"
+                >
+                </ng-select>
+              </label>
 
-            <label class="field">
-              <span class="field__label">UoM *</span>
-              <ng-select
-                class="field__input"
-                [items]="uomOptions"
-                bindLabel="name"
-                bindValue="name"
-                formControlName="uoM"
-                placeholder="Select UoM"
-              >
-              </ng-select>
-            </label>
+              <label class="field">
+                <span class="field__label">Rate *</span>
+                <input
+                  nz-input
+                  class="field__input"
+                  formControlName="rate"
+                  placeholder="18% ..."
+                />
+              </label>
 
-            <label class="field">
-              <span class="field__label">Quantity *</span>
-              <input
-                nz-input
-                class="field__input"
-                formControlName="quantity"
-                placeholder="0"
-                (change)="calculateItemTotal($index)"
-              />
-            </label>
+              <label class="field">
+                <span class="field__label">UoM *</span>
+                <ng-select
+                  class="field__input"
+                  [items]="uomOptions"
+                  bindLabel="name"
+                  bindValue="name"
+                  formControlName="uoM"
+                  placeholder="Select UoM"
+                >
+                </ng-select>
+              </label>
 
-            <label class="field">
-              <span class="field__label">Unit Price *</span>
-              <input
-                nz-input
-                class="field__input"
-                formControlName="valueSalesExcludingST"
-                placeholder="0.00"
-                (change)="calculateItemTotal($index)"
-              />
-            </label>
+              <label class="field">
+                <span class="field__label">Quantity *</span>
+                <input
+                  nz-input
+                  class="field__input"
+                  formControlName="quantity"
+                  placeholder="0"
+                  (change)="calculateItemTotal($index)"
+                />
+              </label>
 
-            <label class="field">
-              <span class="field__label">Fixed Notified/Retail</span>
-              <input
-                nz-input
-                class="field__input"
-                formControlName="fixedNotifiedValueOrRetailPrice"
-                placeholder="0.00"
-                (change)="calculateItemTotal($index)"
-              />
-            </label>
+              <label class="field">
+                <span class="field__label">Value Excluding Sales Tax *</span>
+                <input
+                  nz-input
+                  class="field__input"
+                  formControlName="valueSalesExcludingST"
+                  placeholder="0.00"
+                  (change)="calculateItemTotal($index)"
+                />
+              </label>
 
-            <label class="field">
-              <span class="field__label">Sales Tax *</span>
-              <input
-                nz-input
-                class="field__input"
-                formControlName="salesTaxApplicable"
-                placeholder="0.00"
-                (change)="calculateItemTotal($index)"
-              />
-            </label>
+              <label class="field">
+                <span class="field__label">Fixed Notified/Retail</span>
+                <input
+                  nz-input
+                  class="field__input"
+                  formControlName="fixedNotifiedValueOrRetailPrice"
+                  placeholder="0.00"
+                  (change)="calculateItemTotal($index)"
+                />
+              </label>
 
-            <label class="field">
-              <span class="field__label">Withheld @ Source</span>
-              <input
-                nz-input
-                class="field__input"
-                formControlName="salesTaxWithheldAtSource"
-                placeholder="0.00"
-                (change)="calculateItemTotal($index)"
-              />
-            </label>
+              <label class="field">
+                <span class="field__label">Sales Tax *</span>
+                <input
+                  nz-input
+                  class="field__input"
+                  formControlName="salesTaxApplicable"
+                  placeholder="0.00"
+                  (change)="calculateItemTotal($index)"
+                />
+              </label>
 
-            <label class="field">
-              <span class="field__label">Extra Tax</span>
-              <input
-                nz-input
-                class="field__input"
-                formControlName="extraTax"
-                placeholder="e.g., 0 or description"
-              />
-            </label>
+              <label class="field">
+                <span class="field__label">Withheld @ Source</span>
+                <input
+                  nz-input
+                  class="field__input"
+                  formControlName="salesTaxWithheldAtSource"
+                  placeholder="0.00"
+                  (change)="calculateItemTotal($index)"
+                />
+              </label>
 
-            <label class="field">
-              <span class="field__label">Further Tax</span>
-              <input
-                nz-input
-                class="field__input"
-                formControlName="furtherTax"
-                placeholder="0.00"
-                (change)="calculateItemTotal($index)"
-              />
-            </label>
+              <label class="field">
+                <span class="field__label">Extra Tax</span>
+                <input
+                  nz-input
+                  class="field__input"
+                  formControlName="extraTax"
+                  placeholder="e.g., 0 or description"
+                />
+              </label>
 
-            <label class="field field--wide">
-              <span class="field__label">SRO Schedule No</span>
-              <input
-                nz-input
-                class="field__input"
-                formControlName="sroScheduleNo"
-                placeholder="Schedule number"
-              />
-            </label>
+              <label class="field">
+                <span class="field__label">Further Tax</span>
+                <input
+                  nz-input
+                  class="field__input"
+                  formControlName="furtherTax"
+                  placeholder="0.00"
+                  (change)="calculateItemTotal($index)"
+                />
+              </label>
 
-            <label class="field">
-              <span class="field__label">FED Payable</span>
-              <input
-                nz-input
-                class="field__input"
-                formControlName="fedPayable"
-                placeholder="0.00"
-                (change)="calculateItemTotal($index)"
-              />
-            </label>
+              <label class="field field--wide">
+                <span class="field__label">SRO Schedule No</span>
+                <input
+                  nz-input
+                  class="field__input"
+                  formControlName="sroScheduleNo"
+                  placeholder="Schedule number"
+                />
+              </label>
 
-            <label class="field">
-              <span class="field__label">Discount</span>
-              <input
-                nz-input
-                class="field__input"
-                formControlName="discount"
-                placeholder="0.00"
-                (change)="calculateItemTotal($index)"
-              />
-            </label>
+              <label class="field">
+                <span class="field__label">FED Payable</span>
+                <input
+                  nz-input
+                  class="field__input"
+                  formControlName="fedPayable"
+                  placeholder="0.00"
+                  (change)="calculateItemTotal($index)"
+                />
+              </label>
 
-            <label class="field">
-              <span class="field__label">SRO Item Serial No</span>
-              <input
-                nz-input
-                class="field__input"
-                formControlName="sroItemSerialNo"
-                placeholder="Serial no"
-              />
-            </label>
+              <label class="field">
+                <span class="field__label">Discount</span>
+                <input
+                  nz-input
+                  class="field__input"
+                  formControlName="discount"
+                  placeholder="0.00"
+                  (change)="calculateItemTotal($index)"
+                />
+              </label>
 
-            <div class="field field--total">
-              <span class="field__label">Total Value</span>
-              <div class="total-display">
-                {{ getItemTotal($index) | number : "1.2-2" }}
+              <label class="field">
+                <span class="field__label">SRO Item Serial No</span>
+                <input
+                  nz-input
+                  class="field__input"
+                  formControlName="sroItemSerialNo"
+                  placeholder="Serial no"
+                />
+              </label>
+
+              <div class="field field--total">
+                <span class="field__label">Total Value</span>
+                <input
+                  type="number"
+                  class="field__input"
+                  placeholder="Total Value"
+                  formControlName="totalValues"
+                  step="0.01"
+                  min="0"
+                />
+                <button
+                  type="button"
+                  nz-button
+                  nzType="link"
+                  nzSize="small"
+                  (click)="recalculateItemTotal($index)"
+                  title="Recalculate based on other fields"
+                >
+                  <span nz-icon nzType="calculator"></span>
+                </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      }
+        }
 
-      <!-- Summary -->
-      <div class="items-summary">
-        <div class="summary-row">
-          <strong>Total Items: {{ itemsFormArray.length }}</strong>
+        <!-- Summary -->
+        <div class="items-summary">
+          <div class="summary-row">
+            <strong>Total Items: {{ itemsFormArray.length }}</strong>
+          </div>
+          <div class="summary-row">
+            <strong
+              >Grand Total: PKR {{ getGrandTotal() | number : "1.2-2" }}</strong
+            >
+          </div>
         </div>
-        <div class="summary-row">
-          <strong
-            >Grand Total: PKR {{ getGrandTotal() | number : "1.2-2" }}</strong
-          >
-        </div>
-      </div>
+      </nz-card>
 
       <!-- Actions -->
       <div class="form-actions">

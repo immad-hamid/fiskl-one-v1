@@ -1,6 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { AuthService, User } from '../../core/services/auth.service';
+import { ThemeService } from '../../core/services/theme.service';
 
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
@@ -53,7 +56,18 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
           <span nz-icon nzType="reload"></span>
         </button>
 
-        <nz-badge [nzCount]="3" nzSize="small">
+        <button 
+          nz-button 
+          nzType="text" 
+          nzSize="large"
+          nz-tooltip
+          [nzTooltipTitle]="isDarkTheme ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+          (click)="toggleTheme()">
+          <span nz-icon [nzType]="isDarkTheme ? 'sun' : 'moon'"></span>
+        </button>
+
+        <!-- Notification icon hidden per user request -->
+        <!-- <nz-badge [nzCount]="3" nzSize="small">
           <button 
             nz-button 
             nzType="text" 
@@ -62,11 +76,11 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
             nzTooltipTitle="Notifications">
             <span nz-icon nzType="bell"></span>
           </button>
-        </nz-badge>
+        </nz-badge> -->
 
         <div class="user-menu" nz-dropdown [nzDropdownMenu]="menu" nzPlacement="bottomRight">
-          <nz-avatar nzSize="small" nzIcon="user"></nz-avatar>
-          <span class="username">Admin</span>
+          <nz-avatar nzSize="small" [nzText]="getCurrentUserInitials()"></nz-avatar>
+          <span class="username">{{ getCurrentUserDisplayName() }}</span>
           <span nz-icon nzType="down"></span>
         </div>
 
@@ -75,6 +89,10 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
             <li nz-menu-item (click)="navigateToSettings()">
               <span nz-icon nzType="setting"></span>
               Settings
+            </li>
+            <li nz-menu-divider></li>
+            <li nz-menu-item (click)="toggleTheme()">
+              <span nz-icon [nzType]="isDarkTheme ? 'sun' : 'moon'"></span>
             </li>
             <li nz-menu-divider></li>
             <li nz-menu-item (click)="logout()">
@@ -91,21 +109,21 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
       display: flex;
       justify-content: space-between;
       align-items: center;
-      height: 64px;
-      padding: 0 24px;
-      background: #fff;
+      height: var(--fiskl-header-height);
+      padding: 0 var(--fiskl-spacing-lg);
+      background: var(--fiskl-bg-primary);
     }
 
     .header-left {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: var(--fiskl-spacing-md);
     }
 
     .breadcrumb {
-      font-size: 16px;
-      font-weight: 500;
-      color: #262626;
+      font-size: var(--fiskl-font-size-base);
+      font-weight: var(--fiskl-font-weight-medium);
+      color: var(--fiskl-text-primary);
     }
 
     .route-title {
@@ -115,34 +133,62 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
     .header-right {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: var(--fiskl-spacing-md);
     }
 
     .user-menu {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 6px;
+      gap: var(--fiskl-spacing-sm);
+      padding: var(--fiskl-spacing-sm) var(--fiskl-spacing-md);
+      border-radius: var(--fiskl-radius-md);
       cursor: pointer;
       transition: background-color 0.3s;
     }
 
     .user-menu:hover {
-      background-color: #f5f5f5;
+      background-color: var(--fiskl-bg-secondary);
     }
 
     .username {
-      font-size: 14px;
-      color: #595959;
+      font-size: var(--fiskl-font-size-sm);
+      color: var(--fiskl-text-secondary);
     }
   `]
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit, OnDestroy {
   @Input() isCollapsed = false;
   @Output() toggleCollapsed = new EventEmitter<void>();
 
-  constructor(private router: Router) {}
+  currentUser: User | null = null;
+  isDarkTheme = false;
+  private subscriptions = new Subscription();
+
+  constructor(
+    private router: Router,
+    private authService: AuthService,
+    private themeService: ThemeService
+  ) {}
+
+  ngOnInit(): void {
+    // Subscribe to current user
+    this.subscriptions.add(
+      this.authService.currentUser$.subscribe(user => {
+        this.currentUser = user;
+      })
+    );
+
+    // Subscribe to theme changes
+    this.subscriptions.add(
+      this.themeService.currentTheme$.subscribe(theme => {
+        this.isDarkTheme = theme === 'dark';
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
 
   getRouteTitle(): string {
     const route = this.router.url.split('/')[1] || 'dashboard';
@@ -157,8 +203,39 @@ export class HeaderComponent {
     this.router.navigate(['/settings']);
   }
 
+  toggleTheme(): void {
+    console.log('Theme toggle clicked, current theme:', this.themeService.getCurrentTheme());
+    this.themeService.toggleTheme();
+    console.log('New theme after toggle:', this.themeService.getCurrentTheme());
+  }
+
+  getCurrentUserInitials(): string {
+    if (!this.currentUser?.email) return 'U';
+    return this.currentUser.email.charAt(0).toUpperCase();
+  }
+
+  getCurrentUserDisplayName(): string {
+    if (!this.currentUser?.email) return 'User';
+    // Extract name part from email (before @)
+    const emailName = this.currentUser.email.split('@')[0];
+    // Capitalize first letter and replace dots/underscores with spaces
+    return emailName
+      .replace(/[._]/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+
   logout(): void {
-    // Implement logout logic
-    console.log('Logout clicked');
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+      },
+      error: (error) => {
+        console.error('Logout error:', error);
+        // Even if logout fails, clear local session and redirect
+        this.router.navigate(['/login']);
+      }
+    });
   }
 }
