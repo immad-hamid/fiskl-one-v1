@@ -263,6 +263,33 @@ a {
     }
   }
 
+  /* Fix all date picker backgrounds in dark mode */
+  .ant-picker,
+  .ant-picker:hover,
+  .ant-picker:focus,
+  .ant-picker:focus-within {
+    background-color: var(--fiskl-bg-secondary) !important;
+    color: var(--fiskl-text-primary) !important;
+    border-color: var(--fiskl-border-base) !important;
+  }
+
+  .ant-picker-status-error.ant-picker,
+  .ant-picker-status-error.ant-picker:not(.ant-picker-disabled):hover {
+    background-color: var(--fiskl-bg-secondary) !important;
+    border-color: #ff4d4f !important;
+  }
+
+  .ant-picker-status-error .ant-picker-input input {
+    background-color: var(--fiskl-bg-secondary) !important;
+    color: var(--fiskl-text-primary) !important;
+  }
+
+  /* Fix date picker input text */
+  .ant-picker .ant-picker-input input {
+    background-color: transparent !important;
+    color: var(--fiskl-text-primary) !important;
+  }
+
   /* Fix specific component input overrides */
   .login-form .form-control {
     color: var(--fiskl-text-primary) !important;
