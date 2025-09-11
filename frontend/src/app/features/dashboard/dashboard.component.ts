@@ -141,6 +141,7 @@ import { NotificationService } from '../../core/services/notification.service';
                         nzTooltipTitle="View Details">
                         <span nz-icon nzType="eye"></span>
                       </button>
+                      @if (invoice.status === 'completed' && invoice.fbrStatus === 'posted') {
                       <button 
                         nz-button 
                         nzType="link" 
@@ -150,6 +151,7 @@ import { NotificationService } from '../../core/services/notification.service';
                         nzTooltipTitle="Download PDF">
                         <span nz-icon nzType="download"></span>
                       </button>
+                      }
                     </div>
                   </td>
                 </tr>
