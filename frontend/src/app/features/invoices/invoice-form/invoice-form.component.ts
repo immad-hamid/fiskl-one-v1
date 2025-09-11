@@ -8,7 +8,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-    // recompute chain when sellerProvinceCode changes (origination supplier)import { ActivatedRoute, Router } from '@angular/router';
+// recompute chain when sellerProvinceCode changes (origination supplier)import { ActivatedRoute, Router } from '@angular/router';
 
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCardModule } from 'ng-zorro-antd/card';
@@ -75,9 +75,30 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
   saleTypeOptions: { id: number; description: string }[] = [];
   profiles: Profile[] = [];
 
+  tax236GOptions = [
+    {
+      name: '0.1%',
+      value: 0.1
+    },
+    {
+      name: '2%',
+      value: 2
+    },
+  ];
+  tax236HOptions = [
+    {
+      name: '0.5%',
+      value: 0.5
+    },
+    {
+      name: '2.5%',
+      value: 2.5
+    },
+  ]
+
   private subs = new Subscription();
   private hsCodeSearchSubject = new Subject<string>();
-  
+
   scenarioTypes: {
     id: string;
     desc: string;
@@ -150,6 +171,28 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
         this.addItem(); // Add first item for new invoice
       }
     });
+    this.invoiceForm.get('advanceTax236G')?.valueChanges.subscribe(value => {
+      if (value) { // Your condition here
+        if (!this.invoiceForm.get('advanceTax236H')?.disabled) {
+          this.invoiceForm.get('advanceTax236H')?.disable();
+        }
+      } else {
+        if (this.invoiceForm.get('advanceTax236H')?.disabled) {
+          this.invoiceForm.get('advanceTax236H')?.enable();
+        }
+      }
+    });
+    this.invoiceForm.get('advanceTax236H')?.valueChanges.subscribe(value => {
+      if (value) { // Your condition here
+        if (!this.invoiceForm.get('advanceTax236G')?.disabled) {
+          this.invoiceForm.get('advanceTax236G')?.disable();
+        }
+      } else {
+        if (this.invoiceForm.get('advanceTax236G')?.disabled) {
+          this.invoiceForm.get('advanceTax236G')?.enable();
+        }
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -159,7 +202,7 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
   private syncProvinceCodes(): void {
     const seller = this.invoiceForm.get('sellerProvince')!.value;
     const buyer = this.invoiceForm.get('buyerProvince')!.value;
-    
+
     const sellerMatch = this.provinceOptions.find(
       (p) => p.description === seller
     );
@@ -179,14 +222,14 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
   private ensureProvincesAndFetchRates(itemGroup: FormGroup): void {
     // First ensure province codes are synced
     this.syncProvinceCodes();
-    
+
     // Use a more robust retry mechanism with increasing delays
     let retryCount = 0;
     const maxRetries = 5;
-    
+
     const tryFetchRates = () => {
       const sellerProvinceCode = this.invoiceForm.get('sellerProvinceCode')?.value;
-      
+
       if (sellerProvinceCode) {
         // Province code is available, fetch rates
         this.fetchRateForItem(itemGroup);
@@ -202,7 +245,7 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
         console.warn('Could not sync province codes after multiple retries');
       }
     };
-    
+
     // Start the process
     tryFetchRates();
   }
@@ -233,6 +276,8 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
       buyerProvinceCode: [null], // hidden helper
       buyerAddress: ['', Validators.required],
       buyerRegistrationType: ['', Validators.required],
+      advanceTax236G: [''],
+      advanceTax236H: [''],
       invoiceRefNo: [''],
       scenarioId: ['', Validators.required],
       items: this.fb.array([]),
@@ -274,15 +319,15 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
       grp.get('saleType')!.valueChanges.subscribe((desc: string | null) => {
         if (desc !== null) {
           const tt = this.saleTypeOptions.find((x) => x.description === desc);
-          
+
           // Reset SRO fields immediately when sale type changes
-          grp.patchValue({ 
+          grp.patchValue({
             transTypeId: tt?.id ?? null,
             sroScheduleNo: '',
             sroItemSerialNo: '',
             sroId: null
           }, { emitEvent: false });
-          
+
           // Ensure province codes are synced before fetching rates
           this.ensureProvincesAndFetchRates(grp);
         }
@@ -300,42 +345,42 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     // We need to defer this to get the correct index after the form is added
     setTimeout(() => {
       const itemIndex = this.itemsFormArray.controls.indexOf(grp);
-      
+
       // Recalculate when quantity changes
       this.subs.add(
         grp.get('quantity')!.valueChanges.subscribe(() => {
           this.calculateItemTotal(itemIndex);
         })
       );
-      
+
       // Recalculate when unit price changes
       this.subs.add(
         grp.get('valueSalesExcludingST')!.valueChanges.subscribe(() => {
           this.calculateItemTotal(itemIndex);
         })
       );
-      
+
       // Recalculate when tax rate changes
       this.subs.add(
         grp.get('salesTaxApplicable')!.valueChanges.subscribe(() => {
           this.calculateItemTotal(itemIndex);
         })
       );
-      
+
       // Recalculate when discount changes
       this.subs.add(
         grp.get('discount')!.valueChanges.subscribe(() => {
           this.calculateItemTotal(itemIndex);
         })
       );
-      
+
       // Recalculate when further tax changes
       this.subs.add(
         grp.get('furtherTax')!.valueChanges.subscribe(() => {
           this.calculateItemTotal(itemIndex);
         })
       );
-      
+
       // Recalculate when FED payable changes
       this.subs.add(
         grp.get('fedPayable')!.valueChanges.subscribe(() => {
@@ -432,7 +477,7 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
           { emitEvent: false }
         );
       },
-      error: () => {},
+      error: () => { },
     });
   }
 
@@ -456,13 +501,15 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
 
     // Extract percentage from rate string (e.g., "18%" -> 18)
     const ratePercentage = parseFloat(rateString.replace('%', '')) || 0;
-    
+
     // Calculate sales tax amount using rate percentage
     const salesTaxAmount = valueExcludingST * (ratePercentage / 100);
-    
-    // Calculate total value: valueSalesExcludingST + salesTaxAmount + furtherTax + fedPayable - discount
-    const totalValue = valueExcludingST + salesTaxAmount + (valueExcludingST * furtherTax / 100) + fedPayable - discount;
 
+    // Calculate total value: valueSalesExcludingST + salesTaxAmount + furtherTax + fedPayable - discount
+    // const totalValue = valueExcludingST + salesTaxAmount + (valueExcludingST * furtherTax / 100) + fedPayable - discount;
+    // User will input amount in further tax and fed
+    const totalValue = valueExcludingST + salesTaxAmount + furtherTax + fedPayable - discount;
+    console.log(totalValue, 'totalValue');
     // Round for precision
     const roundedSalesTaxAmount = Math.round(salesTaxAmount * 100) / 100;
     const roundedTotalValue = Math.round(totalValue * 100) / 100;
@@ -488,9 +535,15 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
   }
 
   getGrandTotal(): number {
-    return this.itemsFormArray.controls.reduce((total, item) => {
+    let total = this.itemsFormArray.controls.reduce((total, item) => {
       return total + (item.get('totalValues')?.value || 0);
     }, 0);
+    if (this.invoiceForm.get('advanceTax236G')?.value && this.invoiceForm.get('advanceTax236G')?.value !== '') {
+      total = total + (total * (this.invoiceForm.get('advanceTax236G')?.value/ 100));
+    } else if (this.invoiceForm.get('advanceTax236H')?.value && this.invoiceForm.get('advanceTax236H')?.value !== '') {
+      total = total + (total * (this.invoiceForm.get('advanceTax236H')?.value / 100));
+    }
+    return total;
   }
 
   loadInvoice(): void {
@@ -530,6 +583,8 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
       buyerProvince: invoice.buyerProvince,
       buyerAddress: invoice.buyerAddress,
       buyerRegistrationType: invoice.buyerRegistrationType,
+      advanceTax236G: invoice.advanceTax236G,
+      advanceTax236H: invoice.advanceTax236H,
       invoiceRefNo: invoice.invoiceRefNo,
       scenarioId: invoice.scenarioId,
     });
@@ -557,13 +612,13 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     // Wait a bit more to ensure province codes are set
     setTimeout(() => {
       const sellerProvinceCode = this.invoiceForm.get('sellerProvinceCode')?.value;
-      
+
       // Add items after province codes are properly set
       invoice.items.forEach((itm, index) => {
         const itemForm = this.createItemForm();
         itemForm.patchValue(itm);
         this.itemsFormArray.push(itemForm);
-        
+
         // Only trigger cascade if we have the required province code
         if (sellerProvinceCode && itm.saleType) {
           // Set the sale type which will trigger the cascade
@@ -661,7 +716,7 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
   // HS Code search optimization methods
   onHsCodeSearch(searchEvent: any): void {
     let searchTerm = '';
-    
+
     // Handle different types of search events from ng-select
     if (typeof searchEvent === 'string') {
       searchTerm = searchEvent;
@@ -670,7 +725,7 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     } else if (searchEvent && typeof searchEvent === 'object' && searchEvent.target && searchEvent.target.value) {
       searchTerm = searchEvent.target.value;
     }
-    
+
     // Use the debounced search subject
     this.hsCodeSearchSubject.next(searchTerm);
   }
@@ -678,7 +733,7 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
   private performHsCodeSearch(searchTerm: string): void {
     // Ensure searchTerm is a string and handle null/undefined cases
     const term = typeof searchTerm === 'string' ? searchTerm : '';
-    
+
     if (!term || term.length < 2) {
       // Show first 50 items when no search or search is too short
       this.filteredHsCodeOptions = this.hsCodeOptions.slice(0, 50);
@@ -687,7 +742,7 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
 
     // Filter based on search term
     const searchLower = term.toLowerCase();
-    const filtered = this.hsCodeOptions.filter(option => 
+    const filtered = this.hsCodeOptions.filter(option =>
       option.hsCode.toLowerCase().includes(searchLower) ||
       option.description.toLowerCase().includes(searchLower)
     );
@@ -709,21 +764,21 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
   populateSellerFromProfile(profileId: number | null): void {
     console.log('populateSellerFromProfile called with:', profileId, 'type:', typeof profileId);
     console.log('Available profiles:', this.profiles);
-    
+
     if (!profileId) {
       return; // Don't clear fields when dropdown is cleared
     }
-    
+
     // Convert profileId to number if it's a string
     const numericProfileId = typeof profileId === 'string' ? parseInt(profileId, 10) : profileId;
     console.log('Searching for profile with ID:', numericProfileId);
-    
+
     const profile = this.profiles.find(p => {
       console.log('Comparing profile ID:', p.id, 'type:', typeof p.id, 'with search ID:', numericProfileId);
       return p.id === numericProfileId;
     });
     console.log('Found profile:', profile);
-    
+
     if (profile) {
       this.invoiceForm.patchValue({
         sellerNTNCNIC: profile.ntncnic,
@@ -732,7 +787,7 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
         sellerAddress: profile.address
       });
       console.log('Form patched with seller profile data');
-      
+
       // Trigger province code sync after populating
       setTimeout(() => {
         this.syncProvinceCodes();
@@ -744,21 +799,21 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
 
   populateBuyerFromProfile(profileId: number | null): void {
     console.log('populateBuyerFromProfile called with:', profileId, 'type:', typeof profileId);
-    
+
     if (!profileId) {
       return; // Don't clear fields when dropdown is cleared
     }
-    
+
     // Convert profileId to number if it's a string
     const numericProfileId = typeof profileId === 'string' ? parseInt(profileId, 10) : profileId;
     console.log('Searching for profile with ID:', numericProfileId);
-    
+
     const profile = this.profiles.find(p => {
       console.log('Comparing profile ID:', p.id, 'type:', typeof p.id, 'with search ID:', numericProfileId);
       return p.id === numericProfileId;
     });
     console.log('Found profile:', profile);
-    
+
     if (profile) {
       this.invoiceForm.patchValue({
         buyerNTNCNIC: profile.ntncnic,
@@ -768,7 +823,7 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
         buyerRegistrationType: profile.registrationType
       });
       console.log('Form patched with buyer profile data');
-      
+
       // Trigger province code sync after populating
       setTimeout(() => {
         this.syncProvinceCodes();

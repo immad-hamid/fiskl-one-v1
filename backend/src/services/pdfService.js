@@ -184,9 +184,9 @@ class PDFService {
     try {
       const page = await browser.newPage();
       const html = await this.generateInvoiceHTML(invoice);
-      
+
       await page.setContent(html, { waitUntil: 'networkidle0' });
-      
+
       const pdfBuffer = await page.pdf({
         format: 'A4',
         margin: {
@@ -229,13 +229,13 @@ class PDFService {
             }
             .header { 
                 display: flex; 
-                justify-content: space-between; 
-                align-items: flex-start; 
+                justify-content: center; 
+                align-items: center; 
                 margin-bottom: 20px; 
                 border-bottom: 3px solid #34495e;
-                padding-bottom: 15px;
+                padding-bottom: 2px;
                 background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-                padding: 15px;
+                padding: 2px;
                 border-radius: 8px;
                 margin: -20px -20px 20px -20px;
             }
@@ -523,29 +523,9 @@ class PDFService {
         </style>
     </head>
     <body>
-                <div class="header">
-            <div class="company-section">
-                ${logoBase64 ? `<img src="${logoBase64}" alt="Company Logo" class="logo" />` : ''}
-                <div class="company-info">
-                    <h2>${invoice.companyName || 'Your Company Name'}</h2>
-                    <p><strong>Address:</strong> ${invoice.companyAddress || 'Company Address'}</p>
-                    <p><strong>Phone:</strong> ${invoice.companyPhone || 'Phone Number'}</p>
-                    ${invoice.companyEmail ? `<p><strong>Email:</strong> ${invoice.companyEmail}</p>` : ''}
-                    ${invoice.companyTaxId ? `<p><strong>Tax ID:</strong> ${invoice.companyTaxId}</p>` : ''}
-                </div>
-            </div>
-            <div class="invoice-meta">
-                <div style="margin-top: 15px; font-size: 14px; color: #5a6c7d;">
-                    <strong>Invoice Date:</strong><br>
-                    ${new Date().toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                    })}
-                </div>
-            </div>
+        <div class="header">
+         <h2> Sales Tax Invoice </h2>
         </div>
-
         <div class="watermark">INVOICE</div>
 
         <div class="invoice-header-info">
@@ -646,7 +626,7 @@ class PDFService {
             </div>
             
             <table class="totals-table">
-                ${this.calculateTotals(invoice.items).map(total => `
+                ${this.calculateTotals(invoice.items, invoice).map(total => `
                     <tr ${total.isGrandTotal ? 'class="grand-total"' : ''}>
                         <td class="label">${total.label}:</td>
                         <td class="amount">PKR ${total.amount}</td>
@@ -657,7 +637,7 @@ class PDFService {
 
         <div class="footer">
             <div style="font-style: italic; margin-bottom: 10px;">This is a computer generated invoice and does not require a signature.</div>
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #bdc3c7; padding-top: 15px; margin-top: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #bdc3c7; padding-top: 4px; margin-top: 4px;">
                 <p style="margin: 0;">Generated on: ${new Date().toLocaleString()}</p>
                 <p style="margin: 0; font-weight: 600;">Invoice #${invoice.invoiceNumber}</p>
             </div>
@@ -668,21 +648,31 @@ class PDFService {
     `;
   }
 
-  static calculateTotals(items) {
+  static calculateTotals(items, invoice) {
     const totals = [];
-    
+
     const subtotal = items.reduce((sum, item) => sum + parseFloat(item.valueSalesExcludingST), 0);
     const totalSalesTax = items.reduce((sum, item) => sum + parseFloat(item.salesTaxApplicable), 0);
     const totalFED = items.reduce((sum, item) => sum + parseFloat(item.fedPayable), 0);
     const totalDiscount = items.reduce((sum, item) => sum + parseFloat(item.discount), 0);
     const totalFurtherTax = items.reduce((sum, item) => sum + parseFloat(item.furtherTax), 0);
-    const grandTotal = items.reduce((sum, item) => sum + parseFloat(item.totalValues), 0);
+    const grandTotal = invoice.totalAmount;
 
     totals.push({ label: 'Subtotal (Excl. ST)', amount: subtotal.toFixed(2) });
     totals.push({ label: 'Total Sales Tax', amount: totalSalesTax.toFixed(2) });
     totals.push({ label: 'Total FED', amount: totalFED.toFixed(2) });
     totals.push({ label: 'Total Discount', amount: totalDiscount.toFixed(2) });
     totals.push({ label: 'Total Further Tax', amount: totalFurtherTax.toFixed(2) });
+
+    if (invoice.advanceTax236G) {
+      const tax = grandTotal - grandTotal / (1 + (invoice.advanceTax236G / 100));
+      totals.push({ label: '236G Amount', amount: `${tax.toFixed(2)} (${invoice.advanceTax236G}%)` });
+    }
+    if (invoice.advanceTax236H) {
+      const tax = grandTotal - grandTotal / (1 + (invoice.advanceTax236H / 100));
+      totals.push({ label: '236H Amount', amount: `${tax.toFixed(2)} (${invoice.advanceTax236H}%)` });
+    }
+
     totals.push({ label: 'GRAND TOTAL', amount: grandTotal.toFixed(2), isGrandTotal: true });
 
     return totals;
@@ -724,33 +714,33 @@ class PDFService {
 
   static getFbrLogoBase64() {
     const fbrLogoPath = path.join(__dirname, '../../uploads/fbr-logo.png');
-    
+
     if (!fs.existsSync(fbrLogoPath)) {
       // Try other formats
       const fbrLogoPathJpg = path.join(__dirname, '../../uploads/fbr-logo.jpg');
       const fbrLogoPathJpeg = path.join(__dirname, '../../uploads/fbr-logo.jpeg');
-      
+
       if (fs.existsSync(fbrLogoPathJpg)) {
         return this.fileToBase64(fbrLogoPathJpg, 'image/jpeg');
       } else if (fs.existsSync(fbrLogoPathJpeg)) {
         return this.fileToBase64(fbrLogoPathJpeg, 'image/jpeg');
       }
-      
+
       // If no FBR logo found, return null (will not display)
       return null;
     }
-    
+
     return this.fileToBase64(fbrLogoPath, 'image/png');
   }
 
   static getLogoBase64() {
     const logoPath = path.join(__dirname, '../../uploads/logo.png');
-    
+
     if (!fs.existsSync(logoPath)) {
       // Try other formats
       const logoPathJpg = path.join(__dirname, '../../uploads/logo.jpg');
       const logoPathJpeg = path.join(__dirname, '../../uploads/logo.jpeg');
-      
+
       if (fs.existsSync(logoPathJpg)) {
         return this.fileToBase64(logoPathJpg, 'image/jpeg');
       } else if (fs.existsSync(logoPathJpeg)) {
@@ -758,7 +748,7 @@ class PDFService {
       }
       return null;
     }
-    
+
     return this.fileToBase64(logoPath, 'image/png');
   }
 

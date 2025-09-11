@@ -4,17 +4,17 @@ const { v4: uuidv4 } = require('uuid');
 // Helper function to convert Prisma Decimal fields to JavaScript numbers with 4 decimal precision
 const convertDecimalFields = (obj) => {
   if (!obj) return obj;
-  
+
   if (Array.isArray(obj)) {
     return obj.map(convertDecimalFields);
   }
-  
+
   if (typeof obj === 'object') {
     // Handle Date objects
     if (obj instanceof Date) {
       return obj.toISOString();
     }
-    
+
     // Handle Prisma Decimal objects (they have s, e, d properties)
     if (obj.s !== undefined && obj.e !== undefined && obj.d !== undefined) {
       // This is a Prisma Decimal object, convert to number
@@ -26,7 +26,7 @@ const convertDecimalFields = (obj) => {
         return 0;
       }
     }
-    
+
     const converted = {};
     for (const [key, value] of Object.entries(obj)) {
       if (value && typeof value === 'object') {
@@ -50,28 +50,29 @@ const convertDecimalFields = (obj) => {
     }
     return converted;
   }
-  
+
   return obj;
 };
 
 class InvoiceService {
   static async createInvoice(invoiceData) {
     const { items, ...allInvoiceDetails } = invoiceData;
-    
+
     // Only pick fields that exist in the database schema for Invoice
     const allowedInvoiceFields = [
-      'invoiceType', 'invoiceDate', 'sellerNTNCNIC', 'sellerBusinessName', 
+      'invoiceType', 'invoiceDate', 'sellerNTNCNIC', 'sellerBusinessName',
       'sellerProvince', 'sellerAddress', 'buyerNTNCNIC', 'buyerBusinessName',
-      'buyerProvince', 'buyerAddress', 'buyerRegistrationType', 'invoiceRefNo', 'scenarioId', 'status', 'fbrStatus'
+      'buyerProvince', 'buyerAddress', 'buyerRegistrationType', 'invoiceRefNo', 'scenarioId', 'status', 'fbrStatus',
+      'advanceTax236G', 'advanceTax236H'
     ];
-    
+
     const invoiceDetails = {};
     allowedInvoiceFields.forEach(field => {
       if (allInvoiceDetails[field] !== undefined) {
         invoiceDetails[field] = allInvoiceDetails[field];
       }
     });
-    
+
     // Only pick fields that exist in the database schema for InvoiceItem
     const allowedItemFields = [
       'hsCode', 'productDescription', 'rate', 'uoM', 'quantity', 'totalValues',
@@ -79,7 +80,7 @@ class InvoiceService {
       'salesTaxWithheldAtSource', 'extraTax', 'furtherTax', 'sroScheduleNo',
       'fedPayable', 'discount', 'saleType', 'sroItemSerialNo'
     ];
-    
+
     const cleanedItems = items.map(item => {
       const cleanedItem = {};
       allowedItemFields.forEach(field => {
@@ -89,9 +90,15 @@ class InvoiceService {
       });
       return cleanedItem;
     });
-    
+
     // Calculate total amount
-    const totalAmount = cleanedItems.reduce((sum, item) => sum + parseFloat(item.totalValues), 0);
+    let totalAmount = cleanedItems.reduce((sum, item) => sum + parseFloat(item.totalValues), 0);
+    if (invoiceDetails.advanceTax236G) {
+      totalAmount = totalAmount + (totalAmount * (invoiceDetails.advanceTax236G / 100))
+    }
+    if (invoiceDetails.advanceTax236H) {
+      totalAmount = totalAmount + (totalAmount * (invoiceDetails.advanceTax236H / 100))
+    }
 
     const invoice = await prisma.invoice.create({
       data: {
@@ -111,9 +118,9 @@ class InvoiceService {
 
   static async getInvoices(page = 1, limit = 10, filters = {}) {
     const skip = (page - 1) * limit;
-    
+
     const where = {};
-    
+
     // Add filters
     if (filters.status) {
       where.status = filters.status;
@@ -188,21 +195,22 @@ class InvoiceService {
 
   static async updateInvoice(id, updateData) {
     const { items, ...allInvoiceDetails } = updateData;
-    
+
     // Only pick fields that exist in the database schema for Invoice
     const allowedInvoiceFields = [
-      'invoiceType', 'invoiceDate', 'sellerNTNCNIC', 'sellerBusinessName', 
+      'invoiceType', 'invoiceDate', 'sellerNTNCNIC', 'sellerBusinessName',
       'sellerProvince', 'sellerAddress', 'buyerNTNCNIC', 'buyerBusinessName',
-      'buyerProvince', 'buyerAddress', 'buyerRegistrationType', 'invoiceRefNo', 'scenarioId', 'status', 'fbrStatus'
+      'buyerProvince', 'buyerAddress', 'buyerRegistrationType', 'invoiceRefNo', 'scenarioId', 'status', 'fbrStatus',
+      'advanceTax236G', 'advanceTax236H'
     ];
-    
+
     const invoiceDetails = {};
     allowedInvoiceFields.forEach(field => {
       if (allInvoiceDetails[field] !== undefined) {
         invoiceDetails[field] = allInvoiceDetails[field];
       }
     });
-    
+
     // Calculate new total if items are provided
     let totalAmount;
     if (items) {
@@ -213,7 +221,7 @@ class InvoiceService {
         'salesTaxWithheldAtSource', 'extraTax', 'furtherTax', 'sroScheduleNo',
         'fedPayable', 'discount', 'saleType', 'sroItemSerialNo'
       ];
-      
+
       const cleanedItems = items.map(item => {
         const cleanedItem = {};
         allowedItemFields.forEach(field => {
@@ -223,10 +231,14 @@ class InvoiceService {
         });
         return cleanedItem;
       });
-      
       totalAmount = cleanedItems.reduce((sum, item) => sum + parseFloat(item.totalValues), 0);
+      if (invoiceDetails.advanceTax236G) {
+        totalAmount = totalAmount + (totalAmount * (invoiceDetails.advanceTax236G / 100))
+      }
+      if (invoiceDetails.advanceTax236H) {
+        totalAmount = totalAmount + (totalAmount * (invoiceDetails.advanceTax236H / 100))
+      }
     }
-
     const updatePayload = {
       ...invoiceDetails,
       ...(totalAmount && { totalAmount })
@@ -249,7 +261,7 @@ class InvoiceService {
         'salesTaxWithheldAtSource', 'extraTax', 'furtherTax', 'sroScheduleNo',
         'fedPayable', 'discount', 'saleType', 'sroItemSerialNo'
       ];
-      
+
       const cleanedItems = items.map(item => {
         const cleanedItem = {};
         allowedItemFields.forEach(field => {
@@ -259,7 +271,7 @@ class InvoiceService {
         });
         return cleanedItem;
       });
-      
+
       // Delete existing items and create new ones
       await prisma.invoiceItem.deleteMany({
         where: { invoiceId: parseInt(id) }

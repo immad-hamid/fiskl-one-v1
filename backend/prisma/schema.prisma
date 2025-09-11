@@ -21,6 +21,8 @@ model Invoice {
   buyerProvince         String   @map("buyer_province")
   buyerAddress          String   @map("buyer_address")
   buyerRegistrationType String   @map("buyer_registration_type")
+  advanceTax236G        Decimal? @map("advance_tax_236G")
+  advanceTax236H        Decimal? @map("advance_tax_236H")
   invoiceRefNo          String?  @map("invoice_ref_no")
   scenarioId            String   @map("scenario_id")
   status                String   @default("pending")

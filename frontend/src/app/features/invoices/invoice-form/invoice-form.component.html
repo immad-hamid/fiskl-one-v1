@@ -18,17 +18,12 @@
             <nz-form-item>
               <nz-form-label nzRequired>Invoice Type</nz-form-label>
               <nz-form-control nzErrorTip="Please select invoice type">
-                <ng-select
-                  class="field__input"
-                  [items]="[
+                <ng-select class="field__input" [items]="[
                     'Sale Invoice',
                     'Purchase Invoice',
                     'Credit Note',
                     'Debit Note'
-                  ]"
-                  formControlName="invoiceType"
-                  placeholder="Select invoice type"
-                >
+                  ]" formControlName="invoiceType" placeholder="Select invoice type">
                 </ng-select>
               </nz-form-control>
             </nz-form-item>
@@ -38,12 +33,8 @@
             <nz-form-item>
               <nz-form-label nzRequired>Invoice Date</nz-form-label>
               <nz-form-control nzErrorTip="Please select invoice date">
-                <nz-date-picker
-                  formControlName="invoiceDate"
-                  nzPlaceHolder="Select date"
-                  nzFormat="yyyy-MM-dd HH:mm:ss"
-                  style="width: 100%"
-                >
+                <nz-date-picker formControlName="invoiceDate" nzPlaceHolder="Select date" nzFormat="yyyy-MM-dd HH:mm:ss"
+                  style="width: 100%">
                 </nz-date-picker>
               </nz-form-control>
             </nz-form-item>
@@ -53,11 +44,7 @@
             <nz-form-item>
               <nz-form-label>Invoice Reference</nz-form-label>
               <nz-form-control>
-                <input
-                  nz-input
-                  formControlName="invoiceRefNo"
-                  placeholder="Enter reference number"
-                />
+                <input nz-input formControlName="invoiceRefNo" placeholder="Enter reference number" />
               </nz-form-control>
             </nz-form-item>
           </div>
@@ -66,14 +53,8 @@
             <nz-form-item>
               <nz-form-label nzRequired>Scenario ID</nz-form-label>
               <nz-form-control nzErrorTip="Please enter scenario ID">
-                <ng-select
-                  class="field__input"
-                  [items]="scenarioTypes"
-                  bindLabel="desc"
-                  bindValue="id"
-                  formControlName="scenarioId"
-                  placeholder="Goods at standard rate to registered buyers"
-                >
+                <ng-select class="field__input" [items]="scenarioTypes" bindLabel="desc" bindValue="id"
+                  formControlName="scenarioId" placeholder="Goods at standard rate to registered buyers">
                 </ng-select>
               </nz-form-control>
             </nz-form-item>
@@ -82,21 +63,13 @@
       </nz-card>
 
       <!-- Seller Information -->
-      <nz-card
-        nzTitle="Seller Information"
-        class="form-card"
-        [nzExtra]="sellerPopulateTemp"
-      >
+      <nz-card nzTitle="Seller Information" class="form-card" [nzExtra]="sellerPopulateTemp">
         <div nz-row [nzGutter]="16">
           <div nz-col nzXs="24" nzSm="12" nzMd="8">
             <nz-form-item>
               <nz-form-label nzRequired>NTN/CNIC</nz-form-label>
               <nz-form-control nzErrorTip="Please enter seller NTN/CNIC">
-                <input
-                  nz-input
-                  formControlName="sellerNTNCNIC"
-                  placeholder="Enter NTN/CNIC"
-                />
+                <input nz-input formControlName="sellerNTNCNIC" placeholder="Enter NTN/CNIC" />
               </nz-form-control>
             </nz-form-item>
           </div>
@@ -105,11 +78,7 @@
             <nz-form-item>
               <nz-form-label nzRequired>Business Name</nz-form-label>
               <nz-form-control nzErrorTip="Please enter seller business name">
-                <input
-                  nz-input
-                  formControlName="sellerBusinessName"
-                  placeholder="Enter business name"
-                />
+                <input nz-input formControlName="sellerBusinessName" placeholder="Enter business name" />
               </nz-form-control>
             </nz-form-item>
           </div>
@@ -118,14 +87,8 @@
             <nz-form-item>
               <nz-form-label nzRequired>Province</nz-form-label>
               <nz-form-control nzErrorTip="Please select seller province">
-                <ng-select
-                  class="field__input"
-                  [items]="provinceOptions"
-                  bindLabel="description"
-                  bindValue="description"
-                  formControlName="sellerProvince"
-                  placeholder="Select province"
-                >
+                <ng-select class="field__input" [items]="provinceOptions" bindLabel="description"
+                  bindValue="description" formControlName="sellerProvince" placeholder="Select province">
                 </ng-select>
               </nz-form-control>
             </nz-form-item>
@@ -135,24 +98,15 @@
             <nz-form-item>
               <nz-form-label nzRequired>Address</nz-form-label>
               <nz-form-control nzErrorTip="Please enter seller address">
-                <textarea
-                  nz-input
-                  formControlName="sellerAddress"
-                  placeholder="Enter complete address"
-                ></textarea>
+                <textarea nz-input formControlName="sellerAddress" placeholder="Enter complete address"></textarea>
               </nz-form-control>
             </nz-form-item>
           </div>
         </div>
       </nz-card>
       <ng-template #sellerPopulateTemp>
-        <ng-select
-          class="profile-select"
-          placeholder="🏢 Use Profile..."
-          [clearable]="true"
-          [searchable]="false"
-          (change)="populateSellerFromProfile($event)"
-        >
+        <ng-select class="profile-select" placeholder="🏢 Use Profile..." [clearable]="true" [searchable]="false"
+          (change)="populateSellerFromProfile($event)">
           <ng-option *ngFor="let profile of profiles" [value]="profile.id">
             {{ profile.name }}
             <small *ngIf="profile.isDefault"> (Default)</small>
@@ -161,21 +115,13 @@
       </ng-template>
 
       <!-- Buyer Information -->
-      <nz-card
-        nzTitle="Buyer Information"
-        class="form-card"
-        [nzExtra]="buyerPopulateTemp"
-      >
+      <nz-card nzTitle="Buyer Information" class="form-card" [nzExtra]="buyerPopulateTemp">
         <div nz-row [nzGutter]="16">
           <div nz-col nzXs="24" nzSm="12" nzMd="8">
             <nz-form-item>
               <nz-form-label nzRequired>NTN/CNIC</nz-form-label>
               <nz-form-control nzErrorTip="Please enter buyer NTN/CNIC">
-                <input
-                  nz-input
-                  formControlName="buyerNTNCNIC"
-                  placeholder="Enter NTN/CNIC"
-                />
+                <input nz-input formControlName="buyerNTNCNIC" placeholder="Enter NTN/CNIC" />
               </nz-form-control>
             </nz-form-item>
           </div>
@@ -184,11 +130,7 @@
             <nz-form-item>
               <nz-form-label nzRequired>Business Name</nz-form-label>
               <nz-form-control nzErrorTip="Please enter buyer business name">
-                <input
-                  nz-input
-                  formControlName="buyerBusinessName"
-                  placeholder="Enter business name"
-                />
+                <input nz-input formControlName="buyerBusinessName" placeholder="Enter business name" />
               </nz-form-control>
             </nz-form-item>
           </div>
@@ -197,14 +139,8 @@
             <nz-form-item>
               <nz-form-label nzRequired>Province</nz-form-label>
               <nz-form-control nzErrorTip="Please select buyer province">
-                <ng-select
-                  class="field__input"
-                  [items]="provinceOptions"
-                  bindLabel="description"
-                  bindValue="description"
-                  formControlName="buyerProvince"
-                  placeholder="Select province"
-                >
+                <ng-select class="field__input" [items]="provinceOptions" bindLabel="description"
+                  bindValue="description" formControlName="buyerProvince" placeholder="Select province">
                 </ng-select>
               </nz-form-control>
             </nz-form-item>
@@ -214,12 +150,8 @@
             <nz-form-item>
               <nz-form-label nzRequired>Registration Type</nz-form-label>
               <nz-form-control nzErrorTip="Please select registration type">
-                <ng-select
-                  class="field__input"
-                  [items]="['Registered', 'Unregistered']"
-                  formControlName="buyerRegistrationType"
-                  placeholder="Select type"
-                >
+                <ng-select class="field__input" [items]="['Registered', 'Unregistered']"
+                  formControlName="buyerRegistrationType" placeholder="Select type">
                 </ng-select>
               </nz-form-control>
             </nz-form-item>
@@ -229,30 +161,53 @@
             <nz-form-item>
               <nz-form-label nzRequired>Address</nz-form-label>
               <nz-form-control nzErrorTip="Please enter buyer address">
-                <textarea
-                  nz-input
-                  formControlName="buyerAddress"
-                  placeholder="Enter complete address"
-                ></textarea>
+                <textarea nz-input formControlName="buyerAddress" placeholder="Enter complete address"></textarea>
               </nz-form-control>
             </nz-form-item>
           </div>
         </div>
       </nz-card>
       <ng-template #buyerPopulateTemp>
-        <ng-select
-          class="profile-select"
-          placeholder="🏢 Use Profile..."
-          [clearable]="true"
-          [searchable]="false"
-          (change)="populateBuyerFromProfile($event)"
-        >
+        <ng-select class="profile-select" placeholder="🏢 Use Profile..." [clearable]="true" [searchable]="false"
+          (change)="populateBuyerFromProfile($event)">
           <ng-option *ngFor="let profile of profiles" [value]="profile.id">
             {{ profile.name }}
             <small *ngIf="profile.isDefault"> (Default)</small>
           </ng-option>
         </ng-select>
       </ng-template>
+
+      <!-- 236G and 236H -->
+      <nz-card nzTitle="Advance Tax Collection" class="form-card">
+        <div nz-row [nzGutter]="16">
+          <div nz-col nzXs="24" nzSm="12" nzMd="8">
+            <nz-form-item>
+              <nz-form-label nzRequired>236G</nz-form-label>
+              <nz-form-control nzErrorTip="Please select 236G percentage">
+                <ng-select class="field__input" formControlName="advanceTax236G"
+                  placeholder="Select 236G percentage">
+                  @for (tax of tax236GOptions; track tax.name) {
+                  <ng-option [value]="tax.value">{{tax.name}}</ng-option>
+                  }
+                </ng-select>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+          <div nz-col nzXs="24" nzSm="12" nzMd="8">
+            <nz-form-item>
+              <nz-form-label nzRequired>236H</nz-form-label>
+              <nz-form-control nzErrorTip="Please select 236H percentage">
+                <ng-select class="field__input" formControlName="advanceTax236H" placeholder="Select 236H percentage">
+                  @for (tax of tax236HOptions; track tax.name) {
+                  <ng-option [value]="tax.value">{{tax.name}}</ng-option>
+                  }
+                </ng-select>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+
+        </div>
+      </nz-card>
 
       <!-- Invoice Items -->
       <ng-template #addInvoiceItemTemp>
@@ -269,17 +224,9 @@
           <div class="item-card" [formGroupName]="$index">
             <div class="item-card__header">
               <div class="item-card__title">Item #{{ $index + 1 }}</div>
-              <button
-                nz-button
-                nzType="text"
-                nzDanger
-                nzSize="small"
-                nz-popconfirm
-                nzPopconfirmTitle="Remove this item?"
-                (nzOnConfirm)="removeItem($index)"
-                [disabled]="itemsFormArray.length === 1"
-                aria-label="Remove item"
-              >
+              <button nz-button nzType="text" nzDanger nzSize="small" nz-popconfirm
+                nzPopconfirmTitle="Remove this item?" (nzOnConfirm)="removeItem($index)"
+                [disabled]="itemsFormArray.length === 1" aria-label="Remove item">
                 <span nz-icon nzType="delete"></span>
               </button>
             </div>
@@ -287,24 +234,11 @@
             <div class="item-card__fields">
               <label class="field">
                 <span class="field__label">HS Code *</span>
-                <ng-select
-                  class="field__input"
-                  [items]="filteredHsCodeOptions"
-                  bindLabel="hsCode"
-                  bindValue="hsCode"
-                  formControlName="hsCode"
-                  placeholder="Search HS code (type to filter)"
-                  [searchable]="true"
-                  [virtualScroll]="true"
-                  (search)="onHsCodeSearch($event)"
-                  (scrollToEnd)="onHsCodeScrollToEnd()"
-                  [clearSearchOnAdd]="false"
-                  [loading]="hsCodeOptions.length === 0"
-                >
-                  <ng-option
-                    *ngFor="let option of filteredHsCodeOptions"
-                    [value]="option.hsCode"
-                  >
+                <ng-select class="field__input" [items]="filteredHsCodeOptions" bindLabel="hsCode" bindValue="hsCode"
+                  formControlName="hsCode" placeholder="Search HS code (type to filter)" [searchable]="true"
+                  [virtualScroll]="true" (search)="onHsCodeSearch($event)" (scrollToEnd)="onHsCodeScrollToEnd()"
+                  [clearSearchOnAdd]="false" [loading]="hsCodeOptions.length === 0">
+                  <ng-option *ngFor="let option of filteredHsCodeOptions" [value]="option.hsCode">
                     {{ option.hsCode }} - {{ option.description }}
                   </ng-option>
                 </ng-select>
@@ -312,187 +246,98 @@
 
               <label class="field field--wide">
                 <span class="field__label">Description *</span>
-                <input
-                  nz-input
-                  class="field__input"
-                  formControlName="productDescription"
-                  placeholder="Product description"
-                />
+                <input nz-input class="field__input" formControlName="productDescription"
+                  placeholder="Product description" />
               </label>
 
               <label class="field field--wide">
                 <span class="field__label">Sale Type</span>
-                <ng-select
-                  class="field__input"
-                  [items]="saleTypeOptions"
-                  bindLabel="description"
-                  bindValue="description"
-                  formControlName="saleType"
-                  placeholder="Select sale type"
-                  [clearable]="true"
-                >
+                <ng-select class="field__input" [items]="saleTypeOptions" bindLabel="description"
+                  bindValue="description" formControlName="saleType" placeholder="Select sale type" [clearable]="true">
                 </ng-select>
               </label>
 
               <label class="field">
                 <span class="field__label">Rate *</span>
-                <input
-                  nz-input
-                  class="field__input"
-                  formControlName="rate"
-                  placeholder="18% ..."
-                />
+                <input nz-input class="field__input" formControlName="rate" placeholder="18% ..." />
               </label>
 
               <label class="field">
                 <span class="field__label">UoM *</span>
-                <ng-select
-                  class="field__input"
-                  [items]="uomOptions"
-                  bindLabel="name"
-                  bindValue="name"
-                  formControlName="uoM"
-                  placeholder="Select UoM"
-                >
+                <ng-select class="field__input" [items]="uomOptions" bindLabel="name" bindValue="name"
+                  formControlName="uoM" placeholder="Select UoM">
                 </ng-select>
               </label>
 
               <label class="field">
                 <span class="field__label">Quantity *</span>
-                <input
-                  nz-input
-                  class="field__input"
-                  formControlName="quantity"
-                  placeholder="0"
-                  (change)="calculateItemTotal($index)"
-                />
+                <input nz-input class="field__input" formControlName="quantity" placeholder="0"
+                  (change)="calculateItemTotal($index)" />
               </label>
 
               <label class="field">
                 <span class="field__label">Value Excluding Sales Tax *</span>
-                <input
-                  nz-input
-                  class="field__input"
-                  formControlName="valueSalesExcludingST"
-                  placeholder="0.00"
-                  (change)="calculateItemTotal($index)"
-                />
+                <input nz-input class="field__input" formControlName="valueSalesExcludingST" placeholder="0.00"
+                  (change)="calculateItemTotal($index)" />
               </label>
 
               <label class="field">
                 <span class="field__label">Fixed Notified/Retail</span>
-                <input
-                  nz-input
-                  class="field__input"
-                  formControlName="fixedNotifiedValueOrRetailPrice"
-                  placeholder="0.00"
-                  (change)="calculateItemTotal($index)"
-                />
+                <input nz-input class="field__input" formControlName="fixedNotifiedValueOrRetailPrice"
+                  placeholder="0.00" (change)="calculateItemTotal($index)" />
               </label>
 
               <label class="field">
                 <span class="field__label">Sales Tax *</span>
-                <input
-                  nz-input
-                  class="field__input"
-                  formControlName="salesTaxApplicable"
-                  placeholder="0.00"
-                  (change)="calculateItemTotal($index)"
-                />
+                <input nz-input class="field__input" formControlName="salesTaxApplicable" placeholder="0.00"
+                  (change)="calculateItemTotal($index)" />
               </label>
 
               <label class="field">
                 <span class="field__label">Withheld @ Source</span>
-                <input
-                  nz-input
-                  class="field__input"
-                  formControlName="salesTaxWithheldAtSource"
-                  placeholder="0.00"
-                  (change)="calculateItemTotal($index)"
-                />
+                <input nz-input class="field__input" formControlName="salesTaxWithheldAtSource" placeholder="0.00"
+                  (change)="calculateItemTotal($index)" />
               </label>
 
               <label class="field">
                 <span class="field__label">Extra Tax</span>
-                <input
-                  nz-input
-                  class="field__input"
-                  formControlName="extraTax"
-                  placeholder="e.g., 0 or description"
-                />
+                <input nz-input class="field__input" formControlName="extraTax" placeholder="e.g., 0 or description" />
               </label>
 
               <label class="field">
                 <span class="field__label">Further Tax</span>
-                <input
-                  nz-input
-                  class="field__input"
-                  formControlName="furtherTax"
-                  placeholder="0.00"
-                  (change)="calculateItemTotal($index)"
-                />
+                <input nz-input class="field__input" formControlName="furtherTax" placeholder="0.00"
+                  (change)="calculateItemTotal($index)" />
               </label>
 
               <label class="field field--wide">
                 <span class="field__label">SRO Schedule No</span>
-                <input
-                  nz-input
-                  class="field__input"
-                  formControlName="sroScheduleNo"
-                  placeholder="Schedule number"
-                />
+                <input nz-input class="field__input" formControlName="sroScheduleNo" placeholder="Schedule number" />
               </label>
 
               <label class="field">
                 <span class="field__label">FED Payable</span>
-                <input
-                  nz-input
-                  class="field__input"
-                  formControlName="fedPayable"
-                  placeholder="0.00"
-                  (change)="calculateItemTotal($index)"
-                />
+                <input nz-input class="field__input" formControlName="fedPayable" placeholder="0.00"
+                  (change)="calculateItemTotal($index)" />
               </label>
 
               <label class="field">
                 <span class="field__label">Discount</span>
-                <input
-                  nz-input
-                  class="field__input"
-                  formControlName="discount"
-                  placeholder="0.00"
-                  (change)="calculateItemTotal($index)"
-                />
+                <input nz-input class="field__input" formControlName="discount" placeholder="0.00"
+                  (change)="calculateItemTotal($index)" />
               </label>
 
               <label class="field">
                 <span class="field__label">SRO Item Serial No</span>
-                <input
-                  nz-input
-                  class="field__input"
-                  formControlName="sroItemSerialNo"
-                  placeholder="Serial no"
-                />
+                <input nz-input class="field__input" formControlName="sroItemSerialNo" placeholder="Serial no" />
               </label>
 
               <div class="field field--total">
                 <span class="field__label">Total Value</span>
-                <input
-                  type="number"
-                  class="field__input"
-                  placeholder="Total Value"
-                  formControlName="totalValues"
-                  step="0.01"
-                  min="0"
-                />
-                <button
-                  type="button"
-                  nz-button
-                  nzType="link"
-                  nzSize="small"
-                  (click)="recalculateItemTotal($index)"
-                  title="Recalculate based on other fields"
-                >
+                <input type="number" class="field__input" placeholder="Total Value" formControlName="totalValues"
+                  step="0.01" min="0" />
+                <button type="button" nz-button nzType="link" nzSize="small" (click)="recalculateItemTotal($index)"
+                  title="Recalculate based on other fields">
                   <span nz-icon nzType="calculator"></span>
                 </button>
               </div>
@@ -507,9 +352,7 @@
             <strong>Total Items: {{ itemsFormArray.length }}</strong>
           </div>
           <div class="summary-row">
-            <strong
-              >Grand Total: PKR {{ getGrandTotal() | number : "1.2-2" }}</strong
-            >
+            <strong>Grand Total: PKR {{ getGrandTotal() | number : "1.2-2" }}</strong>
           </div>
         </div>
       </nz-card>
@@ -517,23 +360,11 @@
       <!-- Actions -->
       <div class="form-actions">
         <button nz-button nzSize="large" (click)="goBack()">Cancel</button>
-        <button
-          nz-button
-          nzType="default"
-          nzSize="large"
-          (click)="saveDraft()"
-          [nzLoading]="saving"
-        >
+        <button nz-button nzType="default" nzSize="large" (click)="saveDraft()" [nzLoading]="saving">
           Save as Draft
         </button>
-        <button
-          (click)="onSubmit()"
-          nz-button
-          nzType="primary"
-          nzSize="large"
-          [nzLoading]="saving"
-          [disabled]="!invoiceForm.valid"
-        >
+        <button (click)="onSubmit()" nz-button nzType="primary" nzSize="large" [nzLoading]="saving"
+          [disabled]="!invoiceForm.valid">
           {{ isEditMode ? "Update Invoice" : "Create Invoice" }}
         </button>
       </div>

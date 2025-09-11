@@ -12,6 +12,8 @@ export interface Invoice {
   buyerProvince: string;
   buyerAddress: string;
   buyerRegistrationType: string;
+  advanceTax236H?: string;
+  advanceTax236G?: string;
   invoiceRefNo?: string;
   scenarioId: string;
   status?: string | null;
