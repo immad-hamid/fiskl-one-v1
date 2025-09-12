@@ -90,7 +90,7 @@ if errorlevel 1 (
     goto exit
 )
 echo [v] Frontend dependencies installed.
-
+ 
 echo =====================================
 echo Step 4.5: Building frontend for production
 echo =====================================
@@ -105,7 +105,7 @@ if errorlevel 1 (
 echo [v] Frontend built successfully.
  
 cd /d "%~dp0"
-
+ 
 echo =====================================
 echo Step 5: Installing serve package globally
 echo =====================================

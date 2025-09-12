@@ -29,8 +29,7 @@ module.exports = {
     {
       name: 'fiskl-frontend',
       cwd: './frontend',
-      script: 'serve',
-      args: '-s dist/frontend -l 4200',
+      script: 'server.js',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
@@ -55,7 +54,7 @@ module.exports = {
       listen_timeout: 5000
     }
   ],
-
+ 
   // Deployment configuration (optional)
   deploy: {
     production: {
