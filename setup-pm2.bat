@@ -41,27 +41,33 @@ echo [v] Skipping cleanup - will start fresh PM2 processes.
 echo Starting applications with PM2 using ecosystem.config.js...
 REM Wait a moment for PM2 daemon to initialize
 timeout /t 2 /nobreak >nul
-pm2 start ecosystem.config.js
+call pm2 start ecosystem.config.js
 echo [v] Applications started with PM2.
  
 REM Show current PM2 status regardless of startup success
 echo.
 echo Current PM2 status:
-pm2 status
+call pm2 list
  
 echo Saving PM2 configuration...
-pm2 save
-echo [v] PM2 configuration saved.
+call pm2 save >nul 2>&1
+if errorlevel 1 (
+    echo [!] Warning: Failed to save PM2 configuration.
+) else (
+    echo [v] PM2 configuration saved.
+)
  
+echo.
 echo =====================================
 echo Step 3: Windows startup (optional)
 echo =====================================
+echo Configuring PM2 to start with Windows is optional but recommended.
 choice /C YN /M "Do you want PM2 to start automatically with Windows?"
 if errorlevel 2 goto startup_skip
  
 echo Installing pm2-windows-startup...
 call npm install -g pm2-windows-startup
-pm2-startup install
+call pm2-startup install
 if errorlevel 1 (
     echo [!] Warning: Failed to configure Windows startup. You may need to run as Administrator.
 ) else (
@@ -76,7 +82,7 @@ echo =====================================
 echo Your FISKL One applications are now running with PM2.
  
 echo PM2 Status:
-pm2 status
+call pm2 list
 echo
  
 echo Access your applications:
