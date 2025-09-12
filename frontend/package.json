@@ -4,10 +4,17 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --proxy-config proxy.conf.json",
+    "start:host": "ng serve --host 0.0.0.0 --port 4200 --proxy-config proxy.conf.json",
     "prod": "ng serve --proxy-config proxy.conf.prod.json",
     "build": "ng build",
+    "build:prod": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "pm2:start": "cd .. && pm2 start ecosystem.config.js",
+    "pm2:stop": "cd .. && pm2 stop ecosystem.config.js",
+    "pm2:restart": "cd .. && pm2 restart ecosystem.config.js",
+    "pm2:logs": "pm2 logs",
+    "pm2:status": "pm2 status"
   },
   "prettier": {
     "overrides": [
