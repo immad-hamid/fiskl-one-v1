@@ -29,15 +29,15 @@ module.exports = {
     {
       name: 'fiskl-frontend',
       cwd: './frontend',
-      script: 'npm',
-      args: 'run start:host',
+      script: 'serve',
+      args: '-s dist/frontend -l 4200',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
       watch: false,
-      max_memory_restart: '2G',
+      max_memory_restart: '512M',
       env: {
-        NODE_ENV: 'development'
+        NODE_ENV: 'production'
       },
       env_production: {
         NODE_ENV: 'production'
@@ -51,9 +51,8 @@ module.exports = {
       min_uptime: '10s',
       max_restarts: 10,
       restart_delay: 4000,
-      // Additional configuration for Angular development server
-      kill_timeout: 5000,
-      listen_timeout: 8000
+      kill_timeout: 3000,
+      listen_timeout: 5000
     }
   ],
 
