@@ -45,8 +45,10 @@
       font-weight: var(--fiskl-font-weight-medium);
       font-size: var(--fiskl-font-size-sm);
     }
-
-    // Form control styles now handled by global theme styles
+    input {
+      display: block;
+      width: 100%
+    }
   }
 
   .error-message {

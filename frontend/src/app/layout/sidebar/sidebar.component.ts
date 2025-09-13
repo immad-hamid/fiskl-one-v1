@@ -203,11 +203,11 @@ export class SidebarComponent {
       icon: 'bar-chart',
       route: '/reports'
     },
-    {
-      title: 'Settings',
-      icon: 'setting',
-      route: '/settings'
-    }
+    // {
+    //   title: 'Settings',
+    //   icon: 'setting',
+    //   route: '/settings'
+    // }
   ];
 
   constructor(private router: Router) {}

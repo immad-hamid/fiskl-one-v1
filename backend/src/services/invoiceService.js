@@ -91,18 +91,27 @@ class InvoiceService {
       return cleanedItem;
     });
 
+    // Clean advance tax fields - convert empty strings to null for database
+    const cleanedInvoiceDetails = { ...invoiceDetails };
+    if (cleanedInvoiceDetails.advanceTax236G === '' || cleanedInvoiceDetails.advanceTax236G === null) {
+      cleanedInvoiceDetails.advanceTax236G = null;
+    }
+    if (cleanedInvoiceDetails.advanceTax236H === '' || cleanedInvoiceDetails.advanceTax236H === null) {
+      cleanedInvoiceDetails.advanceTax236H = null;
+    }
+
     // Calculate total amount
     let totalAmount = cleanedItems.reduce((sum, item) => sum + parseFloat(item.totalValues), 0);
-    if (invoiceDetails.advanceTax236G) {
-      totalAmount = totalAmount + (totalAmount * (invoiceDetails.advanceTax236G / 100))
+    if (cleanedInvoiceDetails.advanceTax236G) {
+      totalAmount = totalAmount + (totalAmount * (cleanedInvoiceDetails.advanceTax236G / 100))
     }
-    if (invoiceDetails.advanceTax236H) {
-      totalAmount = totalAmount + (totalAmount * (invoiceDetails.advanceTax236H / 100))
+    if (cleanedInvoiceDetails.advanceTax236H) {
+      totalAmount = totalAmount + (totalAmount * (cleanedInvoiceDetails.advanceTax236H / 100))
     }
 
     const invoice = await prisma.invoice.create({
       data: {
-        ...invoiceDetails,
+        ...cleanedInvoiceDetails,
         totalAmount,
         items: {
           create: cleanedItems
@@ -210,6 +219,14 @@ class InvoiceService {
         invoiceDetails[field] = allInvoiceDetails[field];
       }
     });
+
+    // Clean advance tax fields - convert empty strings to null for database
+    if (invoiceDetails.advanceTax236G === '' || invoiceDetails.advanceTax236G === null) {
+      invoiceDetails.advanceTax236G = null;
+    }
+    if (invoiceDetails.advanceTax236H === '' || invoiceDetails.advanceTax236H === null) {
+      invoiceDetails.advanceTax236H = null;
+    }
 
     // Calculate new total if items are provided
     let totalAmount;

@@ -114,14 +114,6 @@ interface ReportData {
                       nzLabel="Sale Invoice"
                     ></nz-option>
                     <nz-option
-                      nzValue="Purchase Invoice"
-                      nzLabel="Purchase Invoice"
-                    ></nz-option>
-                    <nz-option
-                      nzValue="Credit Note"
-                      nzLabel="Credit Note"
-                    ></nz-option>
-                    <nz-option
                       nzValue="Debit Note"
                       nzLabel="Debit Note"
                     ></nz-option>

@@ -185,3 +185,104 @@
     grid-column: auto;
   }
 }
+
+/* Dark mode styles for ng-select */
+[data-theme='dark'] {
+  .page-header h1 {
+    color: #ffffff;
+  }
+
+  .item-card {
+    background: #1f1f1f;
+    border-color: #434343;
+  }
+  
+  .item-card:hover {
+    border-color: #4d6f9b;
+  }
+  
+  .item-card__title {
+    color: #ffffff;
+  }
+  
+  .field__label {
+    color: #b3b3b3;
+  }
+  
+  .items-summary {
+    background-color: #2d2d2d;
+  }
+  
+  .form-actions {
+    background-color: #2d2d2d;
+  }
+
+  /* ng-select dark mode styles */
+  :host ::ng-deep .ng-select {
+    &.ng-select-single .ng-select-container {
+      background-color: #1f1f1f;
+      border-color: #434343;
+      color: #ffffff;
+    }
+    
+    .ng-placeholder {
+      color: #8c8c8c;
+    }
+    
+    .ng-arrow-wrapper .ng-arrow {
+      border-color: #8c8c8c transparent transparent;
+    }
+    
+    .ng-clear-wrapper .ng-clear {
+      color: #8c8c8c;
+    }
+    
+    &.ng-select-opened .ng-select-container {
+      border-color: #1677ff;
+    }
+    
+    &.ng-select-focused .ng-select-container {
+      border-color: #1677ff;
+      box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.2);
+    }
+    
+    .ng-value-container {
+      .ng-value {
+        color: #ffffff;
+        background-color: transparent;
+      }
+      
+      .ng-input > input {
+        background-color: transparent !important;
+      }
+    }
+  }
+  
+  /* ng-select dropdown dark mode */
+  :host ::ng-deep .ng-dropdown-panel {
+    background-color: #1f1f1f;
+    border-color: #434343;
+    
+    .ng-dropdown-panel-items {
+      .ng-option {
+        background-color: #1f1f1f;
+        color: #ffffff;
+        
+        &.ng-option-highlighted {
+          background-color: #1677ff;
+          color: #ffffff;
+        }
+        
+        &.ng-option-selected {
+          background-color: #1677ff;
+          color: #ffffff;
+        }
+        
+        &.ng-option-selected.ng-option-highlighted {
+          background-color: #4096ff;
+          color: #ffffff;
+        }
+      }
+    }
+  }
+}
