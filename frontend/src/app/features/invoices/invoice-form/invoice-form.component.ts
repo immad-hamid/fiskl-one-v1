@@ -74,6 +74,16 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
   uomOptions: { id: number; name: string }[] = [];
   saleTypeOptions: { id: number; description: string }[] = [];
   profiles: Profile[] = [];
+  
+  // Rate and SRO dropdown options - each item can have different rates/schedules/items
+  rateOptionsMap: Map<number, { id: number; description: string; value: number }[]> = new Map();
+  sroScheduleOptionsMap: Map<number, { id: number; description: string }[]> = new Map();
+  sroItemOptionsMap: Map<number, { id: number; description: string }[]> = new Map();
+
+  // Loading states for each cascade step per item
+  rateLoadingMap: Map<number, boolean> = new Map();
+  sroScheduleLoadingMap: Map<number, boolean> = new Map();
+  sroItemLoadingMap: Map<number, boolean> = new Map();
 
   tax236GOptions = [
     {
@@ -310,8 +320,8 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
 
       // helper hidden fields for cascading
       transTypeId: [null as number | null],
-      rateId: [null],
-      sroId: [null],
+      rateId: [null as number | null],
+      sroId: [null as number | null],
     });
 
     // cascade: saleType -> transTypeId -> rate -> schedule -> item
@@ -356,7 +366,14 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
       // Recalculate when unit price changes
       this.subs.add(
         grp.get('valueSalesExcludingST')!.valueChanges.subscribe(() => {
-          this.calculateItemTotal(itemIndex);
+          this.calculateItemTotal(itemIndex, 'valueSalesExcludingST');
+        })
+      );
+
+      // Recalculate when fixed notified value changes (user edited it)
+      this.subs.add(
+        grp.get('fixedNotifiedValueOrRetailPrice')!.valueChanges.subscribe(() => {
+          this.calculateItemTotal(itemIndex, 'fixedNotifiedValueOrRetailPrice');
         })
       );
 
@@ -387,6 +404,43 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
           this.calculateItemTotal(itemIndex);
         })
       );
+
+      // Handle rate selection changes
+      this.subs.add(
+        grp.get('rate')!.valueChanges.subscribe((selectedRateDesc: string | null) => {
+          if (selectedRateDesc) {
+            // Find the selected rate's ID and value, update hidden fields
+            const rateOptions = this.rateOptionsMap.get(itemIndex) || [];
+            const selectedRate = rateOptions.find(r => r.description === selectedRateDesc);
+            if (selectedRate) {
+              grp.patchValue({ 
+                rateId: selectedRate.id,
+                salesTaxApplicable: selectedRate.value 
+              }, { emitEvent: false });
+              // Recalculate totals with new rate
+              this.calculateItemTotal(itemIndex);
+              // Fetch SRO schedule for the newly selected rate
+              this.fetchSroScheduleForItem(grp);
+            }
+          }
+        })
+      );
+
+      // Handle SRO schedule selection changes
+      this.subs.add(
+        grp.get('sroScheduleNo')!.valueChanges.subscribe((selectedScheduleDesc: string | null) => {
+          if (selectedScheduleDesc) {
+            // Find the selected schedule's ID and update the hidden field
+            const scheduleOptions = this.sroScheduleOptionsMap.get(itemIndex) || [];
+            const selectedSchedule = scheduleOptions.find(s => s.description === selectedScheduleDesc);
+            if (selectedSchedule) {
+              grp.patchValue({ sroId: selectedSchedule.id }, { emitEvent: false });
+              // Fetch SRO items for the newly selected schedule
+              this.fetchSroItemsForItem(grp);
+            }
+          }
+        })
+      );
     }, 0);
 
     return grp;
@@ -401,22 +455,38 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const itemIndex = this.itemsFormArray.controls.indexOf(itemGroup);
+    
+    // Set loading state
+    this.rateLoadingMap.set(itemIndex, true);
+
     this.fbr.getSaleTypeToRate(transTypeId, origSupplier).subscribe({
       next: (rates) => {
+        // Clear loading state
+        this.rateLoadingMap.set(itemIndex, false);
+        
         if (!rates?.length) return;
-        // choose first (or present a selection UI if multiple)
-        const r = rates[0];
+        
+        // Store all rate options for this item
+        const rateOptions = rates.map((r: any) => ({
+          id: r.ratE_ID,
+          description: r.ratE_DESC,
+          value: r.ratE_VALUE
+        }));
+        this.rateOptionsMap.set(itemIndex, rateOptions);
+        
+        // Auto-select first rate option
+        const firstRate = rates[0];
         itemGroup.patchValue(
           {
-            rate: r.ratE_DESC, // set the human-readable rate in your form
-            rateId: r.ratE_ID,
-            salesTaxApplicable: r.ratE_VALUE, // set the actual tax percentage value
+            rate: firstRate.ratE_DESC, // set the human-readable rate in your form
+            rateId: firstRate.ratE_ID,
+            salesTaxApplicable: firstRate.ratE_VALUE, // set the actual tax percentage value
           },
           { emitEvent: false }
         );
 
         // Recalculate item total after tax rate is updated
-        const itemIndex = this.itemsFormArray.controls.indexOf(itemGroup);
         if (itemIndex >= 0) {
           this.calculateItemTotal(itemIndex);
         }
@@ -426,6 +496,9 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error fetching rates:', error);
+        // Clear loading state and options on error
+        this.rateLoadingMap.set(itemIndex, false);
+        this.rateOptionsMap.delete(itemIndex);
       },
     });
   }
@@ -436,14 +509,31 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
       this.invoiceForm.get('sellerProvinceCode')!.value;
     if (!rateId || !origSupplierCsv) return;
 
+    const itemIndex = this.itemsFormArray.controls.indexOf(itemGroup);
+    
+    // Set loading state
+    this.sroScheduleLoadingMap.set(itemIndex, true);
+
     this.fbr.getSroSchedule(rateId, origSupplierCsv).subscribe({
       next: (schedules) => {
+        // Clear loading state
+        this.sroScheduleLoadingMap.set(itemIndex, false);
+        
         if (!schedules?.length) return;
-        const s = schedules[0];
+        
+        // Store all SRO schedule options for this item
+        const sroOptions = schedules.map((s: any) => ({
+          id: s.srO_ID,
+          description: s.srO_DESC
+        }));
+        this.sroScheduleOptionsMap.set(itemIndex, sroOptions);
+        
+        // Auto-select first option
+        const firstSchedule = schedules[0];
         itemGroup.patchValue(
           {
-            sroScheduleNo: s.srO_DESC,
-            sroId: s.srO_ID,
+            sroScheduleNo: firstSchedule.srO_DESC,
+            sroId: firstSchedule.srO_ID,
           },
           { emitEvent: false }
         );
@@ -452,6 +542,9 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
         this.fetchSroItemsForItem(itemGroup);
       },
       error: () => {
+        // Clear loading state and options on error
+        this.sroScheduleLoadingMap.set(itemIndex, false);
+        this.sroScheduleOptionsMap.delete(itemIndex);
         itemGroup.patchValue(
           {
             sroScheduleNo: null,
@@ -467,17 +560,37 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     const sroId: number | null = itemGroup.get('sroId')!.value;
     if (!sroId) return;
 
+    const itemIndex = this.itemsFormArray.controls.indexOf(itemGroup);
+    
+    // Set loading state
+    this.sroItemLoadingMap.set(itemIndex, true);
+
     this.fbr.getSroItems(sroId).subscribe({
       next: (items) => {
+        // Clear loading state
+        this.sroItemLoadingMap.set(itemIndex, false);
+        
         if (!items?.length) return;
-        // choose first by default; if you want a dropdown, wire one here
-        const it = items[0];
+        
+        // Store all SRO item options for this item
+        const itemOptions = items.map((it: any) => ({
+          id: it.srO_ITEM_ID || it.id, // Handle different API response structures
+          description: it.srO_ITEM_DESC
+        }));
+        this.sroItemOptionsMap.set(itemIndex, itemOptions);
+        
+        // Auto-select first option
+        const firstItem = items[0];
         itemGroup.patchValue(
-          { sroItemSerialNo: it.srO_ITEM_DESC },
+          { sroItemSerialNo: firstItem.srO_ITEM_DESC },
           { emitEvent: false }
         );
       },
-      error: () => { },
+      error: () => {
+        // Clear loading state and options on error
+        this.sroItemLoadingMap.set(itemIndex, false);
+        this.sroItemOptionsMap.delete(itemIndex);
+      },
     });
   }
 
@@ -487,13 +600,112 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
 
   removeItem(index: number): void {
     if (this.itemsFormArray.length > 1) {
+      // Clean up all options maps and loading states when removing item
+      this.rateOptionsMap.delete(index);
+      this.sroScheduleOptionsMap.delete(index);
+      this.sroItemOptionsMap.delete(index);
+      this.rateLoadingMap.delete(index);
+      this.sroScheduleLoadingMap.delete(index);
+      this.sroItemLoadingMap.delete(index);
+      
+      // Reindex remaining items in all maps
+      const rateEntries = Array.from(this.rateOptionsMap.entries());
+      const scheduleEntries = Array.from(this.sroScheduleOptionsMap.entries());
+      const itemEntries = Array.from(this.sroItemOptionsMap.entries());
+      const rateLoadingEntries = Array.from(this.rateLoadingMap.entries());
+      const scheduleLoadingEntries = Array.from(this.sroScheduleLoadingMap.entries());
+      const itemLoadingEntries = Array.from(this.sroItemLoadingMap.entries());
+      
+      this.rateOptionsMap.clear();
+      this.sroScheduleOptionsMap.clear();
+      this.sroItemOptionsMap.clear();
+      this.rateLoadingMap.clear();
+      this.sroScheduleLoadingMap.clear();
+      this.sroItemLoadingMap.clear();
+      
+      rateEntries.forEach(([oldIndex, options]) => {
+        if (oldIndex > index) {
+          this.rateOptionsMap.set(oldIndex - 1, options);
+        } else if (oldIndex < index) {
+          this.rateOptionsMap.set(oldIndex, options);
+        }
+      });
+      
+      scheduleEntries.forEach(([oldIndex, options]) => {
+        if (oldIndex > index) {
+          this.sroScheduleOptionsMap.set(oldIndex - 1, options);
+        } else if (oldIndex < index) {
+          this.sroScheduleOptionsMap.set(oldIndex, options);
+        }
+      });
+      
+      itemEntries.forEach(([oldIndex, options]) => {
+        if (oldIndex > index) {
+          this.sroItemOptionsMap.set(oldIndex - 1, options);
+        } else if (oldIndex < index) {
+          this.sroItemOptionsMap.set(oldIndex, options);
+        }
+      });
+
+      // Reindex loading states
+      rateLoadingEntries.forEach(([oldIndex, loading]) => {
+        if (oldIndex > index) {
+          this.rateLoadingMap.set(oldIndex - 1, loading);
+        } else if (oldIndex < index) {
+          this.rateLoadingMap.set(oldIndex, loading);
+        }
+      });
+
+      scheduleLoadingEntries.forEach(([oldIndex, loading]) => {
+        if (oldIndex > index) {
+          this.sroScheduleLoadingMap.set(oldIndex - 1, loading);
+        } else if (oldIndex < index) {
+          this.sroScheduleLoadingMap.set(oldIndex, loading);
+        }
+      });
+
+      itemLoadingEntries.forEach(([oldIndex, loading]) => {
+        if (oldIndex > index) {
+          this.sroItemLoadingMap.set(oldIndex - 1, loading);
+        } else if (oldIndex < index) {
+          this.sroItemLoadingMap.set(oldIndex, loading);
+        }
+      });
+      
       this.itemsFormArray.removeAt(index);
     }
   }
 
-  calculateItemTotal(index: number): void {
+  // Helper methods for template
+  getRateOptions(index: number): { id: number; description: string; value: number }[] {
+    return this.rateOptionsMap.get(index) || [];
+  }
+
+  getSroScheduleOptions(index: number): { id: number; description: string }[] {
+    return this.sroScheduleOptionsMap.get(index) || [];
+  }
+
+  getSroItemOptions(index: number): { id: number; description: string }[] {
+    return this.sroItemOptionsMap.get(index) || [];
+  }
+
+  // Loading state helpers for template
+  isRateLoading(index: number): boolean {
+    return this.rateLoadingMap.get(index) || false;
+  }
+
+  isSroScheduleLoading(index: number): boolean {
+    return this.sroScheduleLoadingMap.get(index) || false;
+  }
+
+  isSroItemLoading(index: number): boolean {
+    return this.sroItemLoadingMap.get(index) || false;
+  }
+
+  calculateItemTotal(index: number, triggeredByField?: string): void {
     const item = this.itemsFormArray.at(index);
     const valueExcludingST = parseFloat(item.get('valueSalesExcludingST')?.value) || 0;
+    const fixedNotifiedValue = parseFloat(item.get('fixedNotifiedValueOrRetailPrice')?.value) || 0;
     const rateString = item.get('rate')?.value || '';
     const discount = parseFloat(item.get('discount')?.value) || 0;
     const furtherTax = parseFloat(item.get('furtherTax')?.value) || 0;
@@ -502,26 +714,34 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     // Extract percentage from rate string (e.g., "18%" -> 18)
     const ratePercentage = parseFloat(rateString.replace('%', '')) || 0;
 
-    // Calculate sales tax amount using rate percentage
-    const salesTaxAmount = valueExcludingST * (ratePercentage / 100);
+    // Use fixedNotifiedValue for tax calculation, fallback to valueExcludingST if fixedNotifiedValue is 0
+    const taxBaseAmount = fixedNotifiedValue > 0 ? fixedNotifiedValue : valueExcludingST;
+    
+    // Calculate sales tax amount using rate percentage on the tax base (fixedNotifiedValue)
+    const salesTaxAmount = taxBaseAmount * (ratePercentage / 100);
 
-    // Calculate total value: valueSalesExcludingST + salesTaxAmount + furtherTax + fedPayable - discount
-    // const totalValue = valueExcludingST + salesTaxAmount + (valueExcludingST * furtherTax / 100) + fedPayable - discount;
-    // User will input amount in further tax and fed
-    const totalValue = valueExcludingST + salesTaxAmount + furtherTax + fedPayable - discount;
-    console.log(totalValue, 'totalValue');
+    // Calculate total value: taxBaseAmount + salesTaxAmount + furtherTax + fedPayable - discount
+    const totalValue = taxBaseAmount + salesTaxAmount + furtherTax + fedPayable - discount;
+    
     // Round for precision
     const roundedSalesTaxAmount = Math.round(salesTaxAmount * 100) / 100;
     const roundedTotalValue = Math.round(totalValue * 100) / 100;
 
-    item.patchValue(
-      {
-        fixedNotifiedValueOrRetailPrice: valueExcludingST, // Same as valueSalesExcludingST by default
-        salesTaxApplicable: roundedSalesTaxAmount, // Calculated tax amount (not percentage)
-        totalValues: roundedTotalValue // Final total
-      },
-      { emitEvent: false }
-    );
+    const updateValues: any = {
+      salesTaxApplicable: roundedSalesTaxAmount, // Calculated tax amount based on fixedNotifiedValue
+      totalValues: roundedTotalValue // Final total
+    };
+
+    // Only update fixedNotifiedValue when valueSalesExcludingST changes (not when fixedNotifiedValue itself changes)
+    if (triggeredByField === 'valueSalesExcludingST' && valueExcludingST > 0) {
+      updateValues.fixedNotifiedValueOrRetailPrice = valueExcludingST;
+    }
+    // Initial population: if fixedNotifiedValue is 0 and we have a valueExcludingST
+    else if (fixedNotifiedValue === 0 && valueExcludingST > 0 && !triggeredByField) {
+      updateValues.fixedNotifiedValueOrRetailPrice = valueExcludingST;
+    }
+
+    item.patchValue(updateValues, { emitEvent: false });
   }
 
   recalculateItemTotal(index: number): void {

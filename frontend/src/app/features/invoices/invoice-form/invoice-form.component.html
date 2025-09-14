@@ -257,7 +257,14 @@
 
               <label class="field">
                 <span class="field__label">Rate *</span>
-                <input nz-input class="field__input" formControlName="rate" placeholder="18% ..." />
+                <ng-select class="field__input" [items]="getRateOptions($index)" 
+                  bindLabel="description" bindValue="description"
+                  formControlName="rate" 
+                  placeholder="Select tax rate"
+                  [clearable]="true"
+                  [loading]="isRateLoading($index)"
+                  loadingText="Loading rates...">
+                </ng-select>
               </label>
 
               <label class="field">
@@ -310,7 +317,14 @@
 
               <label class="field field--wide">
                 <span class="field__label">SRO Schedule No</span>
-                <input nz-input class="field__input" formControlName="sroScheduleNo" placeholder="Schedule number" />
+                <ng-select class="field__input" [items]="getSroScheduleOptions($index)" 
+                  bindLabel="description" bindValue="description"
+                  formControlName="sroScheduleNo" 
+                  placeholder="Select SRO schedule"
+                  [clearable]="true"
+                  [loading]="isSroScheduleLoading($index)"
+                  loadingText="Loading schedules...">
+                </ng-select>
               </label>
 
               <label class="field">
@@ -327,7 +341,14 @@
 
               <label class="field">
                 <span class="field__label">SRO Item Serial No</span>
-                <input nz-input class="field__input" formControlName="sroItemSerialNo" placeholder="Serial no" />
+                <ng-select class="field__input" [items]="getSroItemOptions($index)" 
+                  bindLabel="description" bindValue="description"
+                  formControlName="sroItemSerialNo" 
+                  placeholder="Select SRO item"
+                  [clearable]="true"
+                  [loading]="isSroItemLoading($index)"
+                  loadingText="Loading items...">
+                </ng-select>
               </label>
 
               <div class="field field--total">
