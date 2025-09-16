@@ -163,6 +163,38 @@ class InvoiceController {
     }
   }
 
+  static async validateInvoice(req, res, next) {
+    try {
+      const invoice = await InvoiceService.getInvoiceById(req.params.id);
+      await ThirdPartyService.validateInvoice(invoice);
+
+      res.json({
+        success: true,
+        message: 'Invoice validation successful'
+      });
+    } catch (error) {
+      console.log('=== VALIDATION ERROR DEBUG ===');
+      console.log('Error object:', error);
+      console.log('error.statusCode:', error.statusCode);
+      console.log('error.status:', error.status);
+      console.log('error.message:', error.message);
+      console.log('error.fbrErrorCode:', error.fbrErrorCode);
+      console.log('error.fbrStatus:', error.fbrStatus);
+      console.log('error.itemSNo:', error.itemSNo);
+
+      const statusCode = error.statusCode || 500;
+      console.log('Final statusCode being used:', statusCode);
+
+      res.status(statusCode).json({
+        success: false,
+        message: error.message || 'Invoice validation failed',
+        fbrErrorCode: error.fbrErrorCode,
+        fbrStatus: error.fbrStatus,
+        itemSNo: error.itemSNo
+      });
+    }
+  }
+
   static async postToFbr(req, res, next) {
     try {
       const result = await InvoiceService.postToFbr(req.params.id);
@@ -174,7 +206,15 @@ class InvoiceController {
         fbrResponse: result.postResponse
       });
     } catch (error) {
+      console.log('=== POST TO FBR ERROR DEBUG ===');
+      console.log('Error object:', error);
+      console.log('error.statusCode:', error.statusCode);
+      console.log('error.status:', error.status);
+      console.log('error.message:', error.message);
+
       const statusCode = error.statusCode || 500;
+      console.log('Final statusCode being used in postToFbr:', statusCode);
+
       res.status(statusCode).json({
         success: false,
         message: error.message || 'Failed to post invoice to FBR',

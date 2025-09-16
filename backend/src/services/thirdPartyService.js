@@ -4,6 +4,7 @@ class ThirdPartyService {
   static async sendInvoiceData(invoiceData) {
     const apiUrl = process.env.THIRD_PARTY_API_URL;
     const apiKey = process.env.THIRD_PARTY_API_KEY;
+    console.log('API Key:', apiKey);
 
     if (!apiUrl || !apiKey) {
       console.warn('Third-party API configuration missing');
@@ -174,18 +175,52 @@ class ThirdPartyService {
   }
 
   static validateResponse(responseData) {
+    console.log('=== VALIDATE RESPONSE DEBUG ===');
+    console.log('responseData:', JSON.stringify(responseData, null, 2));
+
     // Check main validation response
     if (!responseData.validationResponse || responseData.validationResponse.status !== 'Valid') {
+      console.log('Main validation status is not Valid');
+
+      // Check if there are item-level validation errors first
+      if (responseData.validationResponse?.invoiceStatuses) {
+        console.log('Checking item-level validation errors...');
+        for (const status of responseData.validationResponse.invoiceStatuses) {
+          if (status.status !== 'Valid' && status.error) {
+            console.log('Found item-level error:', status);
+            const fbrError = new Error(status.error);
+            fbrError.statusCode = 400;
+            fbrError.fbrErrorCode = status.errorCode;
+            fbrError.fbrStatus = status.status;
+            fbrError.itemSNo = status.itemSNo;
+            console.log('Created fbrError with statusCode:', fbrError.statusCode);
+            throw fbrError;
+          }
+        }
+      }
+
+      // Fallback to main validation error if no item errors found
+      console.log('Using main validation error as fallback');
       const error = responseData.validationResponse?.error || 'Unknown validation error';
-      throw new Error(error);
+      const fbrError = new Error(error);
+      fbrError.statusCode = 400;
+      fbrError.fbrErrorCode = responseData.validationResponse?.errorCode;
+      fbrError.fbrStatus = responseData.validationResponse?.status;
+      console.log('Created fallback fbrError with statusCode:', fbrError.statusCode);
+      throw fbrError;
     }
 
-    // Check individual item statuses
+    // Check individual item statuses for valid responses
     if (responseData.validationResponse.invoiceStatuses) {
       for (const status of responseData.validationResponse.invoiceStatuses) {
         if (status.status !== 'Valid') {
           const error = status.error || `Item ${status.itemSNo} validation failed`;
-          throw new Error(error);
+          const fbrError = new Error(error);
+          fbrError.statusCode = 400;
+          fbrError.fbrErrorCode = status.errorCode;
+          fbrError.fbrStatus = status.status;
+          fbrError.itemSNo = status.itemSNo;
+          throw fbrError;
         }
       }
     }

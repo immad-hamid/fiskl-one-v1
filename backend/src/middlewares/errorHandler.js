@@ -19,9 +19,14 @@ const errorHandler = (error, req, res, next) => {
   }
 
   // Default error
-  res.status(error.status || 500).json({
+  const statusCode = error.statusCode || error.status || 500;
+  console.log('Determined status code:', statusCode);
+  res.status(statusCode).json({
     success: false,
     message: error.message || 'Internal server error',
+    fbrErrorCode: error.fbrErrorCode,
+    fbrStatus: error.fbrStatus,
+    itemSNo: error.itemSNo,
     error: process.env.NODE_ENV === 'development' ? error.stack : undefined
   });
 };

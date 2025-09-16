@@ -405,7 +405,8 @@ class InvoiceService {
 
     } catch (error) {
       console.error('FBR posting failed:', error.message);
-      throw new Error(error.message);
+      // Re-throw the original error to preserve statusCode and other properties
+      throw error;
     }
   }
 }
