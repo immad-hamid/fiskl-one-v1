@@ -173,18 +173,7 @@ class InvoiceController {
         message: 'Invoice validation successful'
       });
     } catch (error) {
-      console.log('=== VALIDATION ERROR DEBUG ===');
-      console.log('Error object:', error);
-      console.log('error.statusCode:', error.statusCode);
-      console.log('error.status:', error.status);
-      console.log('error.message:', error.message);
-      console.log('error.fbrErrorCode:', error.fbrErrorCode);
-      console.log('error.fbrStatus:', error.fbrStatus);
-      console.log('error.itemSNo:', error.itemSNo);
-
       const statusCode = error.statusCode || 500;
-      console.log('Final statusCode being used:', statusCode);
-
       res.status(statusCode).json({
         success: false,
         message: error.message || 'Invoice validation failed',
@@ -206,15 +195,7 @@ class InvoiceController {
         fbrResponse: result.postResponse
       });
     } catch (error) {
-      console.log('=== POST TO FBR ERROR DEBUG ===');
-      console.log('Error object:', error);
-      console.log('error.statusCode:', error.statusCode);
-      console.log('error.status:', error.status);
-      console.log('error.message:', error.message);
-
       const statusCode = error.statusCode || 500;
-      console.log('Final statusCode being used in postToFbr:', statusCode);
-
       res.status(statusCode).json({
         success: false,
         message: error.message || 'Failed to post invoice to FBR',

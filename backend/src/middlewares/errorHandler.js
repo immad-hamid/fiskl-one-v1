@@ -20,7 +20,6 @@ const errorHandler = (error, req, res, next) => {
 
   // Default error
   const statusCode = error.statusCode || error.status || 500;
-  console.log('Determined status code:', statusCode);
   res.status(statusCode).json({
     success: false,
     message: error.message || 'Internal server error',
