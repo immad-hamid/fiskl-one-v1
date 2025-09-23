@@ -133,19 +133,40 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     // load lookup data
     const s1 = this.fbr
       .getProvinces()
-      .subscribe((v) => (this.provinceOptions = v));
-    const s2 = this.fbr.getHsCodes().subscribe((v) => {
-      this.hsCodeOptions = v;
-      // Initialize with first 50 items for better performance
-      this.filteredHsCodeOptions = v.slice(0, 50);
+      .subscribe({
+        next: (v) => (this.provinceOptions = v),
+        error: (error) => this.handleFbrLookupError('provinces', error)
+      });
+    const s2 = this.fbr.getHsCodes().subscribe({
+      next: (v) => {
+        this.hsCodeOptions = v;
+        // Initialize with first 50 items for better performance
+        this.filteredHsCodeOptions = v.slice(0, 50);
+      },
+      error: (error) => this.handleFbrLookupError('HS codes', error)
     });
-    const s3 = this.fbr.getUoms().subscribe((v) => (this.uomOptions = v));
+    const s3 = this.fbr.getUoms().subscribe({
+      next: (v) => (this.uomOptions = v),
+      error: (error) => this.handleFbrLookupError('units of measure', error)
+    });
     const s4 = this.fbr
       .getTransactionTypes()
-      .subscribe((v) => (this.saleTypeOptions = v));
+      .subscribe({
+        next: (v) => (this.saleTypeOptions = v),
+        error: (error) => this.handleFbrLookupError('transaction types', error)
+      });
     const s5 = this.profileService
       .getProfiles()
-      .subscribe((response) => (this.profiles = response.data));
+      .subscribe({
+        next: (response) => (this.profiles = response.data),
+        error: (error) => {
+          console.error('Error loading profiles:', error);
+          this.notificationService.error(
+            'Error Loading Profiles',
+            'Failed to load saved profiles. You can still create invoices manually.'
+          );
+        }
+      });
     this.subs.add(s1);
     this.subs.add(s2);
     this.subs.add(s3);
@@ -495,10 +516,10 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
         this.fetchSroScheduleForItem(itemGroup);
       },
       error: (error) => {
-        console.error('Error fetching rates:', error);
         // Clear loading state and options on error
         this.rateLoadingMap.set(itemIndex, false);
         this.rateOptionsMap.delete(itemIndex);
+        this.handleDynamicLookupError('tax rates', error);
       },
     });
   }
@@ -541,7 +562,7 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
         // Next: SRO items (serial)
         this.fetchSroItemsForItem(itemGroup);
       },
-      error: () => {
+      error: (error) => {
         // Clear loading state and options on error
         this.sroScheduleLoadingMap.set(itemIndex, false);
         this.sroScheduleOptionsMap.delete(itemIndex);
@@ -552,6 +573,7 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
           },
           { emitEvent: false }
         );
+        this.handleDynamicLookupError('SRO schedule', error);
       },
     });
   }
@@ -586,10 +608,11 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
           { emitEvent: false }
         );
       },
-      error: () => {
+      error: (error) => {
         // Clear loading state and options on error
         this.sroItemLoadingMap.set(itemIndex, false);
         this.sroItemOptionsMap.delete(itemIndex);
+        this.handleDynamicLookupError('SRO items', error);
       },
     });
   }
@@ -1051,5 +1074,38 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
         this.refreshRatesForAllItems();
       }, 200);
     }
+  }
+
+  // FBR error handling method
+  private handleFbrLookupError(dataType: string, error: any): void {
+    console.error(`Error loading FBR ${dataType}:`, error);
+
+    let title = 'FBR Service Error';
+    let message = `Failed to load ${dataType} from FBR. The FBR system might be temporarily unavailable. Please refresh the page or try again in 30 minutes.`;
+
+    // Check if it's a network/timeout error
+    if (error.name === 'TimeoutError' || error.code === 'ECONNABORTED') {
+      message = `Connection timeout while loading ${dataType}. The FBR system might be slow or down. Please try refreshing the page or wait 30 minutes.`;
+    } else if (error.status === 0 || !navigator.onLine) {
+      message = `Network connection error while loading ${dataType}. Please check your internet connection and try again.`;
+    } else if (error.status >= 500) {
+      message = `FBR server error while loading ${dataType}. The FBR system might be temporarily down. Please try again in 30 minutes.`;
+    }
+
+    this.notificationService.error(title, message);
+  }
+
+  // Dynamic lookup error handling method
+  private handleDynamicLookupError(dataType: string, error: any): void {
+    console.error(`Error loading ${dataType}:`, error);
+
+    let title = 'Tax Data Error';
+    let message = `Failed to load ${dataType}. The FBR tax calculation system might be temporarily unavailable. You can continue entering other invoice details and try again later.`;
+
+    if (error.status >= 500) {
+      message = `FBR server error while loading ${dataType}. Please save your work and try refreshing the page in a few minutes.`;
+    }
+
+    this.notificationService.warning(title, message);
   }
 }
