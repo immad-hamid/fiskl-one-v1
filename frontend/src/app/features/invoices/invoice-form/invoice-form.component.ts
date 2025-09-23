@@ -387,14 +387,14 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
       // Recalculate when unit price changes
       this.subs.add(
         grp.get('valueSalesExcludingST')!.valueChanges.subscribe(() => {
-          this.calculateItemTotal(itemIndex, 'valueSalesExcludingST');
+          this.calculateItemTotal(itemIndex);
         })
       );
 
       // Recalculate when fixed notified value changes (user edited it)
       this.subs.add(
         grp.get('fixedNotifiedValueOrRetailPrice')!.valueChanges.subscribe(() => {
-          this.calculateItemTotal(itemIndex, 'fixedNotifiedValueOrRetailPrice');
+          this.calculateItemTotal(itemIndex);
         })
       );
 
@@ -725,11 +725,12 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     return this.sroItemLoadingMap.get(index) || false;
   }
 
-  calculateItemTotal(index: number, triggeredByField?: string): void {
+  calculateItemTotal(index: number): void {
     const item = this.itemsFormArray.at(index);
     const valueExcludingST = parseFloat(item.get('valueSalesExcludingST')?.value) || 0;
     const fixedNotifiedValue = parseFloat(item.get('fixedNotifiedValueOrRetailPrice')?.value) || 0;
     const rateString = item.get('rate')?.value || '';
+    const saleType = item.get('saleType')?.value || '';
     const discount = parseFloat(item.get('discount')?.value) || 0;
     const furtherTax = parseFloat(item.get('furtherTax')?.value) || 0;
     const fedPayable = parseFloat(item.get('fedPayable')?.value) || 0;
@@ -737,32 +738,28 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
     // Extract percentage from rate string (e.g., "18%" -> 18)
     const ratePercentage = parseFloat(rateString.replace('%', '')) || 0;
 
-    // Use fixedNotifiedValue for tax calculation, fallback to valueExcludingST if fixedNotifiedValue is 0
-    const taxBaseAmount = fixedNotifiedValue > 0 ? fixedNotifiedValue : valueExcludingST;
-    
-    // Calculate sales tax amount using rate percentage on the tax base (fixedNotifiedValue)
+    // NEW LOGIC: Conditional tax base calculation based on Sale Type
+    const taxBaseAmount = (saleType === "3rd Schedule Goods")
+      ? fixedNotifiedValue  // Use fixed value for 3rd Schedule Goods (can be zero)
+      : valueExcludingST;   // Use excluding ST value for all other sale types
+
+    // Calculate sales tax amount using rate percentage on the determined tax base
     const salesTaxAmount = taxBaseAmount * (ratePercentage / 100);
 
     // Calculate total value: taxBaseAmount + salesTaxAmount + furtherTax + fedPayable - discount
     const totalValue = taxBaseAmount + salesTaxAmount + furtherTax + fedPayable - discount;
-    
+
     // Round for precision
     const roundedSalesTaxAmount = Math.round(salesTaxAmount * 100) / 100;
     const roundedTotalValue = Math.round(totalValue * 100) / 100;
 
     const updateValues: any = {
-      salesTaxApplicable: roundedSalesTaxAmount, // Calculated tax amount based on fixedNotifiedValue
+      salesTaxApplicable: roundedSalesTaxAmount, // Calculated tax amount based on new logic
       totalValues: roundedTotalValue // Final total
     };
 
-    // Only update fixedNotifiedValue when valueSalesExcludingST changes (not when fixedNotifiedValue itself changes)
-    if (triggeredByField === 'valueSalesExcludingST' && valueExcludingST > 0) {
-      updateValues.fixedNotifiedValueOrRetailPrice = valueExcludingST;
-    }
-    // Initial population: if fixedNotifiedValue is 0 and we have a valueExcludingST
-    else if (fixedNotifiedValue === 0 && valueExcludingST > 0 && !triggeredByField) {
-      updateValues.fixedNotifiedValueOrRetailPrice = valueExcludingST;
-    }
+    // REMOVED: No longer auto-populate fixedNotifiedValueOrRetailPrice from valueSalesExcludingST
+    // This allows fixedNotifiedValueOrRetailPrice to remain zero or be user-controlled
 
     item.patchValue(updateValues, { emitEvent: false });
   }

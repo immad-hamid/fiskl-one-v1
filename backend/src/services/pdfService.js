@@ -651,7 +651,15 @@ class PDFService {
   static calculateTotals(items, invoice) {
     const totals = [];
 
-    const subtotal = items.reduce((sum, item) => sum + parseFloat(item.valueSalesExcludingST), 0);
+    // NEW LOGIC: Calculate subtotal based on sale type (matches frontend logic)
+    const subtotal = items.reduce((sum, item) => {
+      const saleType = item.saleType || '';
+      const taxBase = (saleType === "3rd Schedule Goods")
+        ? parseFloat(item.fixedNotifiedValueOrRetailPrice) || 0  // Use fixed value for 3rd Schedule Goods
+        : parseFloat(item.valueSalesExcludingST) || 0;           // Use excluding ST value for others
+      return sum + taxBase;
+    }, 0);
+
     const totalSalesTax = items.reduce((sum, item) => sum + parseFloat(item.salesTaxApplicable), 0);
     const totalFED = items.reduce((sum, item) => sum + parseFloat(item.fedPayable), 0);
     const totalDiscount = items.reduce((sum, item) => sum + parseFloat(item.discount), 0);
