@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const logger = require('./utils/logger');
 
 const { connectDatabase } = require('./config/database');
 const invoiceRoutes = require('./routes/invoices');
@@ -13,6 +14,7 @@ const profileRoutes = require('./routes/profiles');
 const fbrRoutes = require('./routes/fbr');
 const { router: authRoutes } = require('./routes/auth');
 const errorHandler = require('./middlewares/errorHandler');
+const { xssProtection, mongoSanitize } = require('./middlewares/security');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,13 +33,17 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// CORS
+// CORS - configurable for different environments
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : [
+      'http://localhost:4200',
+      'http://127.0.0.1:4200',
+      'http://localhost:3000'
+    ];
+
 app.use(cors({
-  origin: [
-    'http://localhost:4200',
-    'http://127.0.0.1:4200',
-    'http://localhost:3000'
-  ],
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -54,6 +60,10 @@ if (process.env.NODE_ENV !== 'test') {
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Input sanitization and security
+app.use(mongoSanitize); // Remove NoSQL injection attempts
+app.use(xssProtection); // XSS protection
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -92,28 +102,31 @@ async function startServer() {
     await connectDatabase();
     
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-      console.log(`📊 Environment: ${process.env.NODE_ENV}`);
-      console.log(`🗄️  Database: Connected to PostgreSQL`);
-      
+      logger.info('Server started successfully', {
+        port: PORT,
+        environment: process.env.NODE_ENV,
+        database: 'PostgreSQL',
+        url: `http://localhost:${PORT}`
+      });
+
       if (process.env.NODE_ENV === 'development') {
-        console.log(`🎨 Prisma Studio: Run 'npm run db:studio' to open database viewer`);
+        logger.info('Development mode - Prisma Studio available via: npm run db:studio');
       }
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    logger.error('Failed to start server', { error: error.message, stack: error.stack });
     process.exit(1);
   }
 }
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
+  logger.info('SIGTERM received, shutting down gracefully');
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully');
+  logger.info('SIGINT received, shutting down gracefully');
   process.exit(0);
 });
 

@@ -1,8 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
-const PORT = 6000;
+const PORT = process.env.PROXY_PORT || 6000;
+const FBR_TARGET_URL = process.env.FBR_TARGET_URL || 'http://157.241.63.25';
 
 // Optional: log inbound requests
 app.use((req, _res, next) => {
@@ -13,7 +15,7 @@ app.use((req, _res, next) => {
 app.use(
   '/fbr',
   createProxyMiddleware({
-    target: 'http://157.241.63.25',
+    target: FBR_TARGET_URL,
     changeOrigin: true,
     secure: false,
     logLevel: 'debug',
@@ -60,5 +62,5 @@ app.get('/health', (_req, res) => res.json({ status: 'ok', port: PORT }));
 
 app.listen(PORT, () => {
   console.log(`🚀 Proxy on http://localhost:${PORT}`);
-  console.log(`📡 /fbr/* -> http://157.241.63.25/fbr/*`);
+  console.log(`📡 /fbr/* -> ${FBR_TARGET_URL}/fbr/*`);
 });

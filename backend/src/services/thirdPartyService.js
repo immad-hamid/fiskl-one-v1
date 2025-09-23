@@ -1,13 +1,13 @@
 const axios = require('axios');
+const logger = require('../utils/logger');
 
 class ThirdPartyService {
   static async sendInvoiceData(invoiceData) {
     const apiUrl = process.env.THIRD_PARTY_API_URL;
     const apiKey = process.env.THIRD_PARTY_API_KEY;
-    console.log('API Key:', apiKey);
 
     if (!apiUrl || !apiKey) {
-      console.warn('Third-party API configuration missing');
+      logger.security('Third-party API configuration missing - check THIRD_PARTY_API_URL and THIRD_PARTY_API_KEY environment variables');
       return;
     }
 
@@ -23,10 +23,17 @@ class ThirdPartyService {
         timeout: 15000
       });
 
-      console.log('Third-party API response:', response.status);
+      logger.info('Third-party API response received', {
+        status: response.status,
+        operation: 'sendInvoiceData'
+      });
       return response.data;
     } catch (error) {
-      console.error('Third-party API error:', error.message);
+      logger.error('Third-party API error in sendInvoiceData', {
+        error: error.message,
+        status: error.response?.status,
+        operation: 'sendInvoiceData'
+      });
       throw error;
     }
   }
@@ -44,10 +51,18 @@ class ThirdPartyService {
     const endpoint = process.env.MOCK_THIRD_PARTY_API === 'true' 
       ? '/fbr/validate-invoice-sb' 
       : '/fbr/validate-invoice';
-    console.log('Using endpoint:', endpoint);
+    logger.info('FBR validation endpoint selected', {
+      endpoint,
+      mockMode: process.env.MOCK_THIRD_PARTY_API === 'true',
+      operation: 'validateInvoice'
+    });
 
     try {
-      const payload = this.formatInvoicePayload(invoiceData);console.log(payload);
+      const payload = this.formatInvoicePayload(invoiceData);
+      logger.debug('FBR validation payload prepared', {
+        operation: 'validateInvoice',
+        itemCount: payload.items?.length || 0
+      });
       const response = await axios.post(`${apiUrl}${endpoint}`, payload, {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
@@ -56,7 +71,10 @@ class ThirdPartyService {
         timeout: 30000
       });
 
-      console.log('<--------------------------- RESPONSE ------------------------->>' + response);
+      logger.info('FBR validation response received', {
+        status: response.status,
+        operation: 'validateInvoice'
+      });
 
       return this.validateResponse(response.data);
     } catch (error) {
@@ -106,7 +124,11 @@ class ThirdPartyService {
 
       return this.validateResponse(response.data);
     } catch (error) {
-      console.error('Invoice posting error:', error.message);
+      logger.error('FBR invoice posting error', {
+        error: error.message,
+        status: error.response?.status,
+        operation: 'postInvoice'
+      });
       
       // Handle FBR API validation errors (when API returns 401 but with validation details)
       if (error.response?.status === 401 && error.response?.data?.validationResponse) {
